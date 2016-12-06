@@ -101,7 +101,7 @@ class Router
 		if(is_array($mixed)) $query_arr = $mixed;
 		else parse_str($mixed, $query_arr);
 		
-		// 确保模式1/2的参数中包含入口文件
+		// 确保非默认模式的参数中包含入口文件
 		if(self::$pattern != 0 && !isset($query_arr['e']))
 		{
 			$query_arr['e'] = isset($_GET['e']) ? $_GET['e'] : 'index';
@@ -110,16 +110,17 @@ class Router
 		switch(self::$pattern)
 		{
 			case 1:
-				// URL形式 [协议://主机名/入口文件/模块名称/控制器名称/操作名称/key/value/key/value...]
-				$url .= '/' . $query_arr['e'] . '/' . $query_arr['m'] . '/' . $query_arr['c'] . '/' . $query_arr['a'] . '/';
-				unset($query_arr['e'], $query_arr['m'], $query_arr['c'], $query_arr['a']);
-				$url .= preg_replace('[=|&]', '/', http_build_query($query_arr));
+				// URL形式 [协议名://主机名/模块名称(index时省略)/入口文件名-控制器名称-操作名称-key-value-key-value....html]
+				// 最佳三层结构，强烈建议使用此模式
+				$url .= '/' . ($query_arr['m'] == 'index' ? '' : $query_arr['m'] . '/');
+				$url .= $query_arr['e'] . '-' . $query_arr['c'] . '-' . $query_arr['a'];
+				unset($query_arr['m'], $query_arr['e'], $query_arr['c'], $query_arr['a']);
+				$elseQueryStr = preg_replace('[=|&]', '-', http_build_query($query_arr));
+				$url .= ($elseQueryStr ? '-' . $elseQueryStr : '') . '.html';
 				break;
 			case 2:
-				// URL形式 [协议://主机名/六位字符串/可能存在的页码/]
-				// 先把页码拿出来
-				$tmpPage = $query_arr['page'] ? $query_arr['page'] : 0;
-				unset($query_arr['page']);
+				// URL形式 [协议名://主机名/模块名称(index时省略)/六位字符串.html]
+				// 此模式产生额外的文件读写消耗，建议仅在对地址长度有强烈需求的时候使用
 				// 转成字符串后再加密一下
 				$queryStr = http_build_query($query_arr);
 				$hashStr = md5(self::$authorKey . $queryStr);
@@ -141,7 +142,7 @@ class Router
 					$tmpFileName = self::$urlMaps . $tmp_str;
 					if(!is_file($tmpFileName) || (is_file($tmpFileName) && self::readUrl($tmpFileName) === $queryStr))
 					{
-						$url .= '/' . $tmp_str . '/' . ($tmpPage ? $tmpPage . '/' : '');
+						$url .= '/' . ($query_arr['m'] == 'index' ? '' : $query_arr['m'] . '/') . $tmp_str . '.html';
 						// 如果未存在映射关系则建立映射
 						if(!is_file($tmpFileName))
 						{
@@ -156,6 +157,13 @@ class Router
 						break;
 					}
 				}
+				break;
+			case 3:
+				// URL形式 [协议名://主机名/入口文件/模块名称/控制器名称/操作名称/key/value/key/value...]
+				// 强制API使用此模式，且不建议非API入口使用此模式
+				$url .= '/' . $query_arr['e'] . '/' . $query_arr['m'] . '/' . $query_arr['c'] . '/' . $query_arr['a'] . '/';
+				unset($query_arr['e'], $query_arr['m'], $query_arr['c'], $query_arr['a']);
+				$url .= preg_replace('[=|&]', '/', http_build_query($query_arr));
 				break;
 			default:
 				$url .= '/' . (isset($query_arr['e']) ? $query_arr['e'] . '.php' : self::$selfScript) . '?' . http_build_query($query_arr);
@@ -172,26 +180,59 @@ class Router
 		// 把s参数处理成数组
 		if(isset($_GET['s']))
 		{
-			$queryArr = explode('/', trim($_GET['s'], '/'));
-			// 修正首页的入口请求为原始请求入口
-			if(strpos($_GET['s'], '.'))
-			{
-				$tmpArr = explode('.', $_GET['s']);
-				$_GET['e'] = $tmpArr[0];
-			}
+			$queryArr = explode('/', trim(str_replace('.html', '', $_GET['s']), '/'));
 		}
 		
 		// 将API请求强制重置为路由1模式并标记为API接口
 		if(isset($queryArr[0]) && $queryArr[0] == 'api')
 		{
-			self::$pattern = 1;
+			self::$pattern = 3;
 			self::$isAPI = true;
 		}
 		
+		// 把不合法的get参数清空
+		if(self::$pattern) $_GET = array();
+		self::$pattern = 2;
 		// 根据路由模式进行对应的URL解析
 		switch(self::$pattern)
 		{
 			case 1:
+				$queryStr = isset($queryArr[1]) ? $queryArr[1] : $queryArr[0];
+				$_GET['m'] = isset($queryArr[1]) ? $queryArr[0] : 'index';
+				// 拆解为数组
+				$secArr = explode('-', $queryStr);
+				$_GET['e'] = isset($secArr[0]) ? $secArr[0] : 'index';
+				$_GET['c'] = isset($secArr[1]) ? $secArr[1] : 'index';
+				$_GET['a'] = isset($secArr[2]) ? $secArr[2] : 'index';
+				// 把奇数元素作为$_GET的键名，把偶数元素作为$_GET的值
+				foreach($secArr as $k => $v)
+				{
+					if($k > 2 && $k % 2 == 1)
+					{
+						$_GET[$v] = isset($secArr[$k+1]) ? $secArr[$k+1] : '';
+					}
+				}
+				break;
+			case 2:
+				$queryStr = isset($queryArr[1]) ? $queryArr[1] : $queryArr[0];
+				$fileName = self::$urlMaps . $queryStr;
+				// 如存在短地址地图，取出数据并合并到$_GET中
+				if(is_file($fileName))
+				{
+					$data = self::readUrl($fileName);
+					if($data !== false)
+					{
+						parse_str($data, $query_arr);
+						foreach($query_arr as $kk => $vv)
+						{
+							$_GET[$kk] = $vv;
+						}
+					}
+				}
+				// 不存在映射则认为是一个入口文件名
+				else $_GET['e'] = $queryStr;
+				break;
+			case 3:
 				$_GET['e'] = isset($queryArr[0]) ? $queryArr[0] : 'index';
 				$_GET['m'] = isset($queryArr[1]) ? $queryArr[1] : 'index';
 				$_GET['c'] = isset($queryArr[2]) ? $queryArr[2] : 'index';
@@ -204,29 +245,6 @@ class Router
 					if($k % 2 == 0)
 					{
 						$_GET[$v] = isset($queryArr[$k+1]) ? $queryArr[$k+1] : '';
-					}
-				}
-				break;
-			case 2:
-				if(isset($queryArr[1]))
-				{
-					$_GET['page'] = $queryArr[1];
-				}
-				if(isset($queryArr[0]))
-				{
-					// 如存在短地址地图，取出数据并合并到$_GET中
-					$fileName = self::$urlMaps . $queryArr[0];
-					if(is_file($fileName))
-					{
-						$data = self::readUrl($fileName);
-						if($data !== false)
-						{
-							parse_str($data, $query_arr);
-							foreach($query_arr as $kk => $vv)
-							{
-								$_GET[$kk] = $vv;
-							}
-						}
 					}
 				}
 				break;

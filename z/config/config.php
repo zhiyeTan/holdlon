@@ -23,10 +23,11 @@ return array(
 	'static_domain'		=> 'static.z.com',
 	
 	/**
-	 * 路由设置，共有以下三种路由模式：
+	 * 路由设置，共有以下4种路由模式：
 	 * 0、协议名://主机名/入口文件.php?m=模块名称&c=控制器名称&a=操作名称&其他参数...
-	 * 1、协议名://主机名/入口文件/模块名称/控制器名称/操作名称/key/value/key/value...
-	 * 2、协议名://主机名/由md5(query_string)后截取得到的长度为6的字符串/页码
+	 * 1、协议名://主机名/模块名称(index时省略)/入口文件/控制器名称/操作名称/key/value/key/value....html
+	 * 2、协议名://主机名/模块名称(index时省略)/由md5(query_string)后截取得到的长度为6的字符串.html
+	 * 3、协议名://主机名/入口文件/模块名称/控制器名称/操作名称/key/value/key/value...
 	 */
 	'route_pattern'		=> 2,
 	
