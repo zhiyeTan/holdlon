@@ -42,18 +42,22 @@ class Loader
 		define('DEFAULT_LANG', $CFG['default_lang']);
 		// 入口与位置地图
 		define('ENTRY_MAPS', serialize($CFG['entry_maps']));
+		// session有效时间
+		define('SESSION_EXPIRE', $CFG['session_expire']);
+		// session有效时间
+		define('COOKIE_EXPIRE', $CFG['cookie_expire']);
 		
 		// 定义MVC错误类型常量
-		defined('ENTRYNOTFOUND')        || define('ENTRYNOTFOUND', 1);        // 入口不存在
-		defined('M_MODULENOTFOUND')     || define('M_MODULENOTFOUND', 2);     // M模块不存在
-		defined('V_MODULENOTFOUND')     || define('V_MODULENOTFOUND', 3);     // V模块不存在
-		defined('C_MODULENOTFOUND')     || define('C_MODULENOTFOUND', 4);     // C模块不存在
-		defined('M_CONTRALLERNOTFOUND') || define('M_CONTRALLERNOTFOUND', 5); // M控制器不存在
-		defined('V_GROUPNOTFOUND')      || define('V_GROUPNOTFOUND', 6);      // V模块子分组不存在
-		defined('C_CONTRALLERNOTFOUND') || define('C_CONTRALLERNOTFOUND', 7); // C控制器不存在
-		defined('M_ACTIONNOTFOUND')     || define('M_ACTIONNOTFOUND', 8);     // M操作不存在
-		defined('V_TEMPLATENOTFOUND')   || define('V_TEMPLATENOTFOUND', 9);   // V模板不存在
-		defined('C_ACTIONNOTFOUND')     || define('C_ACTIONNOTFOUND', 10);     // C操作不存在
+		define('ENTRYNOTFOUND', 1);        // 入口不存在
+		define('M_MODULENOTFOUND', 2);     // M模块不存在
+		define('V_MODULENOTFOUND', 3);     // V模块不存在
+		define('C_MODULENOTFOUND', 4);     // C模块不存在
+		define('M_CONTRALLERNOTFOUND', 5); // M控制器不存在
+		define('V_GROUPNOTFOUND', 6);      // V模块子分组不存在
+		define('C_CONTRALLERNOTFOUND', 7); // C控制器不存在
+		define('M_ACTIONNOTFOUND', 8);     // M操作不存在
+		define('V_TEMPLATENOTFOUND', 9);   // V模板不存在
+		define('C_ACTIONNOTFOUND', 10);     // C操作不存在
 		
 		// 数据库配置项
 		foreach(self::$dbcfgkey as $v)

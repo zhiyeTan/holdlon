@@ -60,13 +60,19 @@ return array(
 	'password'			=> 'root',
 	'charset'			=> 'utf8',
 	
-	//可选：端口
+	// 可选：端口
 	'port'				=> 3306,
 	
-	//可选：表前缀
+	// 可选：表前缀
 	'prefix'			=> 'z_',
 	
-	//可选：pdo驱动选项 http://www.php.net/manual/en/pdo.setattribute.php
-	'option'			=> array(PDO::ATTR_CASE => PDO::CASE_NATURAL)
+	// 可选：pdo驱动选项 http://www.php.net/manual/en/pdo.setattribute.php
+	'option'			=> array(PDO::ATTR_CASE => PDO::CASE_NATURAL),
+	
+	// 设置session有效时间(单位s)
+	'session_expire'	=> 10800,
+	
+	// 设置cookie有效时间(单位s)
+	'cookie_expire'		=> 10800
 	
 );

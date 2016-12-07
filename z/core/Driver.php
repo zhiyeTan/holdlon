@@ -43,6 +43,8 @@ class Driver
 	{
 		// 初始化路由器并解析当前请求
 		Router::init()->parse();
+		// 初始化cookie
+		Cookie::init();
 		// 设置当前emca属性
 		self::setEMCA();
 		// 配置应用位置

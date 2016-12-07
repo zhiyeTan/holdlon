@@ -43,8 +43,8 @@ class Router
 	private function __construct()
 	{
 		self::$pattern = ROUTE_PATTERN;
-		self::$domain = self::domain();
-		self::$staticDomain = self::staticDomain();
+		self::$domain = Request::domain();
+		self::$staticDomain = Request::staticDomain();
 		self::$selfScript = basename($_SERVER['SCRIPT_NAME']);
 		self::$urlMaps = Z_PATH . Z_DS . 'maps' . Z_DS;
 		// cache文件夹不存在则创建并赋值权限
@@ -140,7 +140,7 @@ class Router
 					}
 					// 判断映射是否有效
 					$tmpFileName = self::$urlMaps . $tmp_str;
-					if(!is_file($tmpFileName) || (is_file($tmpFileName) && self::readUrl($tmpFileName) === $queryStr))
+					if(!is_file($tmpFileName) || (is_file($tmpFileName) && self::read($tmpFileName) === $queryStr))
 					{
 						$url .= '/' . ($query_arr['m'] == 'index' ? '' : $query_arr['m'] . '/') . $tmp_str . '.html';
 						// 如果未存在映射关系则建立映射
@@ -219,7 +219,7 @@ class Router
 				// 如存在短地址地图，取出数据并合并到$_GET中
 				if(is_file($fileName))
 				{
-					$data = self::readUrl($fileName);
+					$data = self::read($fileName);
 					if($data !== false)
 					{
 						parse_str($data, $query_arr);
@@ -259,7 +259,7 @@ class Router
 	 * 读取短地址对应的url参数
 	 * @return string
 	 */
-	public static function readUrl($name)
+	public static function read($name)
 	{
 		$file = fopen($name, "r");
 		if(flock($file, LOCK_SH))
@@ -281,50 +281,6 @@ class Router
 		$_GET['m'] = isset($_GET['m']) ? $_GET['m'] : 'index';
 		$_GET['c'] = isset($_GET['c']) ? $_GET['c'] : 'index';
 		$_GET['a'] = isset($_GET['a']) ? $_GET['a'] : 'index';
-	}
-	
-	/**
-	 * 当前是否ssl
-	 * @access public
-	 * @return bool
-	 */
-	public static function isSsl()
-	{
-		if(isset($_SERVER['HTTPS']) && ('1' == $_SERVER['HTTPS'] || 'on' == strtolower($_SERVER['HTTPS']))) return true;
-		elseif(isset($_SERVER['REQUEST_SCHEME']) && 'https' == $_SERVER['REQUEST_SCHEME']) return true;
-		elseif(isset($_SERVER['SERVER_PORT']) && ('443' == $_SERVER['SERVER_PORT'])) return true;
-		elseif(isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && 'https' == $_SERVER['HTTP_X_FORWARDED_PROTO']) return true;
-		return false;
-	}
-	
-	/**
-	 * 当前URL地址中的scheme参数
-	 * @access public
-	 * @return string
-	 */
-	public static function scheme()
-	{
-		return self::isSsl() ? 'https' : 'http';
-	}
-	
-	/**
-	 * 获取当前包含协议的域名
-	 * @access public
-	 * @return string
-	 */
-	public static function domain()
-	{
-		return self::scheme() . '://' . $_SERVER['HTTP_HOST'];
-	}
-	
-	/**
-	 * 获取静态资源所在的包含协议的域名
-	 * @access public
-	 * @return string
-	 */
-	public static function staticDomain()
-	{
-		return self::scheme() . '://' . STATIC_DOMAIN;
 	}
 	
 }
