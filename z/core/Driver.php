@@ -45,6 +45,8 @@ class Driver
 		Router::init()->parse();
 		// 初始化cookie
 		Cookie::init();
+		// 初始化session
+		Session::init();
 		// 设置当前emca属性
 		self::setEMCA();
 		// 配置应用位置

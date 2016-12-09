@@ -2,7 +2,7 @@
 
 namespace z\core;
 
-class widget
+class Widget
 {
 	// 小部件数据目录
 	private static $widgetM;

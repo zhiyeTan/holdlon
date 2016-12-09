@@ -154,15 +154,11 @@ class Response
 			Cache::init()->save($data);
 		}
 		echo $data;
-		
 		if(function_exists('fastcgi_finish_request'))
 		{
 			// 提高页面响应
 			fastcgi_finish_request();
 		}
-		
-		// 清空当次请求有效的数据
-		//Session::flush();
 		exit(0);
 	}
 	
