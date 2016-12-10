@@ -125,13 +125,13 @@ class Router
 				$queryStr = http_build_query($query_arr);
 				$hashStr = md5(self::$authorKey . $queryStr);
 				// 将加密串分成4段计算
-				for($i = 0; $i < 4; $i++)
+				for($i = 0; $i < 4; ++$i)
 				{
 					// 将截取每段字符并转为10进制数组，再与0x3fffffff做位与运算（即把30位以后的字符归零）
 					$idx = hexdec(substr($hashStr, $i << 2, 4)) & 0x3fffffff;
 					// 生成6位短链接
 					$tmp_str = '';
-					for($j = 0; $j < 6; $j++)
+					for($j = 0; $j < 6; ++$j)
 					{
 						// 与$basechar的最大下标0x0000003d（即61）做位与运算得到新的数组下标后取得对应的值
 						$tmp_str .= self::$baseChar[$idx & 0x0000003d];

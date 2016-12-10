@@ -6,7 +6,7 @@ namespace z\core;
  * 请求类
  */
 class Request
-{	
+{
 	/**
 	 * 当前是否ssl
 	 * @access public

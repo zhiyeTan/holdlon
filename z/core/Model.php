@@ -620,7 +620,7 @@ class Model {
 				}
 			}
 
-			$index++;
+			++$index;
 		}
 
 		return $stack;

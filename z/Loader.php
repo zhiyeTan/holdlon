@@ -67,6 +67,9 @@ class Loader
 				self::$dbconfig[$v] = $CFG[$v];
 			}
 		}
+		
+		// 设置时区
+		date_default_timezone_set($CFG['default_timezone']);
 	}
 	
 	// 自动加载

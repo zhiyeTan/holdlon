@@ -136,7 +136,7 @@ class Response
 	 * @param: mixed $data 数据
 	 * @return: mixed
 	 */
-	public function send($data)
+	public function send(&$data)
 	{
 		// 检查 HTTP 表头是否已被发送
 		if(!headers_sent())
@@ -169,7 +169,7 @@ class Response
 	 * @return string 返回JSON形式
 	 * 
 	 */
-	function sendJSON($data)
+	public function sendJSON(&$data)
 	{
 		// 兼容5.3，处理编码时不转义中文
 		if(version_compare(PHP_VERSION,'5.4.0','<'))
@@ -188,6 +188,7 @@ class Response
 		{
 			$json = json_encode($data, JSON_UNESCAPED_UNICODE);
 		}
+		unset($data);
 		// 分别对jsonp和json做处理
 		$json = isset($_GET['callback']) ? (trim($_GET['callback']) . '(' . $json . ')') : $json;
 		// 设置内容类型为jsonp或json
