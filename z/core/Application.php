@@ -42,10 +42,6 @@ class Application
 		Log::init()->save('iplog', date('Y-m-d H:i:s', $_SERVER['REQUEST_TIME']) . ' ' . Request::ip(0));
 		// 初始化路由器并解析当前请求
 		Router::init()->parse();
-		// 初始化cookie
-		Cookie::init();
-		// 初始化session
-		Session::init();
 		// 设置当前emca属性
 		self::setEMCA();
 		// 配置应用位置
@@ -82,6 +78,10 @@ class Application
 	 */
 	public static function run()
 	{
+		// 初始化cookie
+		Cookie::init();
+		// 初始化session
+		Session::init();
 		// 检查缓存，若可用则输出
 		Cache::init()->setName(Router::getCacheKey())->get();
 		// 分别对API和站点请求做检查处理

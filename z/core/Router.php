@@ -180,7 +180,18 @@ class Router
 		// 把s参数处理成数组
 		if(isset($_GET['s']))
 		{
-			$queryArr = explode('/', trim(strtr($_GET['s'], array('.html'=>'')), '/'));
+			if(strpos($_GET['s'], '.'))
+			{
+				$tmps = explode('.', $_GET['s']);
+				$_GET['s'] = $tmps[0];
+			}
+			$queryArr = explode('/', trim($_GET['s'], '/'));
+		}
+		// 没有s参数时
+		else
+		{
+			$tmps = explode('.', self::$selfScript);
+			$queryArr = array($tmps[0]);
 		}
 		
 		// 将API请求强制重置为路由1模式并标记为API接口
@@ -191,8 +202,11 @@ class Router
 		}
 		
 		// 把不合法的get参数清空
-		if(self::$pattern) $_GET = array();
-		self::$pattern = 2;
+		if(self::$pattern)
+		{
+			$_GET = array();
+		}
+		
 		// 根据路由模式进行对应的URL解析
 		switch(self::$pattern)
 		{
@@ -230,7 +244,10 @@ class Router
 					}
 				}
 				// 不存在映射则认为是一个入口文件名
-				else $_GET['e'] = $queryStr;
+				else
+				{
+					$_GET['e'] = $queryStr;
+				}
 				break;
 			case 3:
 				$_GET['e'] = isset($queryArr[0]) ? $queryArr[0] : 'index';
