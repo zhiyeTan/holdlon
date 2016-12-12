@@ -24,8 +24,8 @@ class Cache
 		// cache文件夹不存在则创建并赋值权限
 		if(!is_dir(self::$cache_path))
 		{
-			@mkdir(self::$cache_path);
-			@chmod(self::$cache_path, 0777);
+			mkdir(self::$cache_path);
+			chmod(self::$cache_path, 0777);
 		}
 	}
 	
@@ -51,10 +51,10 @@ class Cache
 	 * @param: string $key 唯一标识
 	 * @return: string
 	 */
-	public function setName($key)
+	public static function setName($key)
 	{
 		self::$filename = self::$cache_path.md5($key);
-		return $this;
+		return self::$_instance;
 	}
 	
 	/**
@@ -62,7 +62,7 @@ class Cache
 	 * @param: args $data 内容数据
 	 * @return: bool
 	 */
-	public function save($data)
+	public static function save($data)
 	{
 		// 序列化数据
 		$file = fopen(self::$filename, 'w');
@@ -80,7 +80,7 @@ class Cache
 	 * 如缓存内容可用则输出
 	 * @return: mixed
 	 */
-	public function get()
+	public static function get()
 	{
 		if(!is_file(self::$filename) || !is_readable(self::$filename))
 		{

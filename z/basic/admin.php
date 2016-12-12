@@ -9,7 +9,10 @@ class admin
 	private static $db;
 	private static function checkDB()
 	{
-		if(!isset(self::$db)) self::$db = Model::init()->setTable('admin');
+		if(!isset(self::$db))
+		{
+			self::$db = Model::setTable('admin');
+		}
 	}
 	
 	// C U R D

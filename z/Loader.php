@@ -80,11 +80,12 @@ class Loader
 		{
 			if(strpos($className, 'z') === false)
 			{
-				$classFile = APP_PATH . str_replace('\\', Z_DS, $className) . '.php';
+				
+				$classFile = APP_PATH . strtr($className, array('\\'=>Z_DS)) . '.php';
 			}
 			else
 			{
-				$classFile = LOAD_PATH . str_replace('\\', Z_DS, $className) . '.php';
+				$classFile = LOAD_PATH . strtr($className, array('\\'=>Z_DS)) . '.php';
 			}
 			if(!is_file($classFile))
 			{
@@ -99,7 +100,7 @@ class Loader
 		include($classFile);
 		if (Z_DEBUG && !class_exists($className, false) && !interface_exists($className, false))
 		{
-			throw new \Exception("Unable to find '$className' in file: $classFile. Namespace missing?");
+			die("Unable to find '$className' in file: $classFile. Namespace missing?");
 		}
 	}
 	

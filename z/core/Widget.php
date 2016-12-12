@@ -44,7 +44,7 @@ class Widget
 	}
 	
 	// 输出
-	public function output($name)
+	public static function output($name)
 	{
 		if(self::checkWidget($name) === true)
 		{

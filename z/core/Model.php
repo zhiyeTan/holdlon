@@ -1,7 +1,6 @@
 <?php
 namespace z\core;
 use PDO;
-use Exception;
 /*!
  * Medoo database framework
  * http://medoo.in
@@ -124,7 +123,7 @@ class Model {
 				$this -> pdo -> exec($value);
 			}
 		} catch (PDOException $e) {
-			throw new Exception($e -> getMessage());
+			die($e -> getMessage());
 		}
 	}
 
@@ -143,10 +142,10 @@ class Model {
 		trigger_error('Clone is not allow' , E_USER_ERROR);
 	}
 	
-	public function setTable($table)
+	public static function setTable($table)
 	{
 		self::$table = $table;
-		return $this;
+		return self::$_instance;
 	}
 
 	public function query($query) {
@@ -399,7 +398,7 @@ class Model {
 				$MATCH = $where['MATCH'];
 
 				if (is_array($MATCH) && isset($MATCH['columns'], $MATCH['keyword'])) {
-					$where_clause .= ($where_clause != '' ? ' AND ' : ' WHERE ') . ' MATCH ("' . str_replace('.', '"."', implode($MATCH['columns'], '", "')) . '") AGAINST (' . $this -> quote($MATCH['keyword']) . ')';
+					$where_clause .= ($where_clause != '' ? ' AND ' : ' WHERE ') . ' MATCH ("' . strtr(implode($MATCH['columns'], '", "'), array('.'=>'"."')) . '") AGAINST (' . $this -> quote($MATCH['keyword']) . ')';
 				}
 			}
 

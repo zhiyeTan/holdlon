@@ -4,22 +4,22 @@ namespace z\core;
 
 class Log
 {
-	private $path;
-	private $maxSize;
+	private static $path;
+	private static $maxSize;
 	// 保存例实例在此属性中
 	private static $_instance;
 	
 	// 构造函数声明为private,防止直接创建对象
 	private function __construct()
 	{
-		$this->path = Z_PATH . Z_DS . 'log' . Z_DS;
+		self::$path = Z_PATH . Z_DS . 'log' . Z_DS;
 		// 设置日志大小上限为5m
-		$this->maxSize = 5242880;
+		self::$maxSize = 5242880;
 		// log文件夹不存在则创建并赋值权限
-		if(!is_dir($this->path))
+		if(!is_dir(self::$path))
 		{
-			@mkdir($this->path);
-			@chmod($this->path, 0777);
+			mkdir(self::$path);
+			chmod(self::$path, 0777);
 		}
 	}
 	
@@ -40,13 +40,17 @@ class Log
 		trigger_error('Clone is not allow' , E_USER_ERROR);
 	}
 	
-	// 
-	public function save($name, $content)
+	/**
+	 * 保存日志
+	 * @param: string $name 日志文件名
+	 * @param: string $content 单条日志的内容
+	 */
+	public static function save($name, $content)
 	{
-		$nosuffix = $this->path . $name;
+		$nosuffix = self::$path . $name;
 		$filename = $nosuffix . '.txt';
 		// 如果文件存在且超过大小上限，则以当前时间重命名该文件
-		if(is_file($filename) && filesize($filename) > $this->maxSize)
+		if(is_file($filename) && filesize($filename) > self::$maxSize)
 		{
 			$newname = $nosuffix . time() . '.txt';
 			// 设置一个值，防止出现死循环(一次延迟100毫秒，30次相当于3s)

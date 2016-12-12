@@ -50,8 +50,8 @@ class Router
 		// cache文件夹不存在则创建并赋值权限
 		if(!is_dir(self::$urlMaps))
 		{
-			@mkdir(self::$urlMaps);
-			@chmod(self::$urlMaps, 0777);
+			mkdir(self::$urlMaps);
+			chmod(self::$urlMaps, 0777);
 		}
 	}
 	
@@ -90,7 +90,7 @@ class Router
 	 * @param: number $static 是否静态文件
 	 * @return url
 	 */
-	public function create($mixed, $static = 0)
+	public static function create($mixed, $static = 0)
 	{
 		if(empty($mixed)) return false;
 		
@@ -175,12 +175,12 @@ class Router
 	 * 解析url把参数放到$_GET中
 	 * 
 	 */
-	public function parse()
+	public static function parse()
 	{
 		// 把s参数处理成数组
 		if(isset($_GET['s']))
 		{
-			$queryArr = explode('/', trim(str_replace('.html', '', $_GET['s']), '/'));
+			$queryArr = explode('/', trim(strtr($_GET['s'], array('.html'=>'')), '/'));
 		}
 		
 		// 将API请求强制重置为路由1模式并标记为API接口

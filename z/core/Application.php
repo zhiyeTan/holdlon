@@ -38,8 +38,8 @@ class Application
 	// 构造函数声明为private,防止直接创建对象
 	public function __construct()
 	{
-		// 保存访问IP到iplog中
-		Log::init()->save('iplog', date('Y-m-d H:i:s', time()) . ' ' . Request::ip(0));
+		// 保存访问时间和IP到iplog中
+		Log::init()->save('iplog', date('Y-m-d H:i:s', $_SERVER['REQUEST_TIME']) . ' ' . Request::ip(0));
 		// 初始化路由器并解析当前请求
 		Router::init()->parse();
 		// 初始化cookie
@@ -80,7 +80,7 @@ class Application
 	 * @param: string $aname 操作名
 	 * 
 	 */
-	public function run()
+	public static function run()
 	{
 		// 检查缓存，若可用则输出
 		Cache::init()->setName(Router::getCacheKey())->get();

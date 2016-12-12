@@ -104,31 +104,31 @@ class Response
 	}
 	
 	// 设置本地缓存时间
-	public function setExpire($timeStamp)
+	public static function setExpire($timeStamp)
 	{
 		self::$expire = (int) $timeStamp;
-		return $this;
+		return self::$_instance;
 	}
 	
 	// 设置是否使用动态缓存
-	public function setCache($status)
+	public static function setCache($status)
 	{
 		self::$cache = !!$status;
-		return $this;
+		return self::$_instance;
 	}
 	
 	// 设置响应状态码
-	public function setCode($code)
+	public static function setCode($code)
 	{
 		if(in_array($code, array_keys($codeMap))) self::$code = $code;
-		return $this;
+		return self::$_instance;
 	}
 	
 	// 设置内容类型
-	public function setContentType($type)
+	public static function setContentType($type)
 	{
 		if(in_array($type, array_keys($contentTypeMap))) self::$contentType = $type;
-		return $this;
+		return self::$_instance;
 	}
 	
 	/**
@@ -136,7 +136,7 @@ class Response
 	 * @param: mixed $data 数据
 	 * @return: mixed
 	 */
-	public function send(&$data)
+	public static function send(&$data)
 	{
 		// 检查 HTTP 表头是否已被发送
 		if(!headers_sent())
@@ -151,7 +151,7 @@ class Response
 		}
 		if(200 == self::$code && self::$cache)
 		{
-			Cache::init()->save($data);
+			Cache::save($data);
 		}
 		echo $data;
 		if(function_exists('fastcgi_finish_request'))
@@ -169,7 +169,7 @@ class Response
 	 * @return string 返回JSON形式
 	 * 
 	 */
-	public function sendJSON(&$data)
+	public static function sendJSON(&$data)
 	{
 		// 兼容5.3，处理编码时不转义中文
 		if(version_compare(PHP_VERSION,'5.4.0','<'))
@@ -193,6 +193,6 @@ class Response
 		$json = isset($_GET['callback']) ? (trim($_GET['callback']) . '(' . $json . ')') : $json;
 		// 设置内容类型为jsonp或json
 		self::$contentType = isset($_GET['callback']) ? 'javascript' : 'json';
-		$this->send($json);
+		self::send($json);
 	}
 }

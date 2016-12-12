@@ -4,16 +4,16 @@ namespace z\core;
 
 class Cookie
 {
-	private $domain;
-	private $isSsl;
+	private static $domain;
+	private static $isSsl;
 	// 保存例实例在此属性中
 	private static $_instance;
 	
 	// 构造函数声明为private,防止直接创建对象
 	private function __construct()
 	{
-		$this->domain = Request::cosDomain();
-		$this->isSsl = Request::isSsl();
+		self::$domain = Request::cosDomain();
+		self::$isSsl = Request::isSsl();
 	}
 	
 	// 单例方法，初始化对象
@@ -36,7 +36,7 @@ class Cookie
 	// 设置cookie
 	public static function set($key, $value)
 	{
-		setcookie($key, $value, COOKIE_EXPIRE, '/', $this->domain, $this->isSsl);
+		setcookie($key, $value, COOKIE_EXPIRE, '/', self::$domain, self::$isSsl);
 	}
 	
 	// 获取cookie值
