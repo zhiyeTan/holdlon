@@ -97,8 +97,9 @@ class Cache
 			$data = unserialize(fread($file, filesize(self::$filename)));
 			flock($file, LOCK_UN);
 			fclose($file);
+			return $data;
 			// 发送响应但不更新缓存
-			Response::init()->setCache(0)->send($data);
+			//Response::init()->setCache(0)->send($data);
 		}
 		else return false;
 	}

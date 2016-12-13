@@ -120,14 +120,14 @@ class Response
 	// 设置响应状态码
 	public static function setCode($code)
 	{
-		if(in_array($code, array_keys($codeMap))) self::$code = $code;
+		if(in_array($code, array_keys(self::$codeMap))) self::$code = $code;
 		return self::$_instance;
 	}
 	
 	// 设置内容类型
 	public static function setContentType($type)
 	{
-		if(in_array($type, array_keys($contentTypeMap))) self::$contentType = $type;
+		if(in_array($type, array_keys(self::$contentTypeMap))) self::$contentType = $type;
 		return self::$_instance;
 	}
 	
@@ -159,7 +159,6 @@ class Response
 			// 提高页面响应
 			fastcgi_finish_request();
 		}
-		exit(0);
 	}
 	
 	/**
@@ -169,7 +168,7 @@ class Response
 	 * @return string 返回JSON形式
 	 * 
 	 */
-	public static function sendJSON(&$data)
+	public static function formatToJSON(&$data)
 	{
 		// 兼容5.3，处理编码时不转义中文
 		if(version_compare(PHP_VERSION,'5.4.0','<'))
@@ -188,11 +187,10 @@ class Response
 		{
 			$json = json_encode($data, JSON_UNESCAPED_UNICODE);
 		}
-		unset($data);
 		// 分别对jsonp和json做处理
 		$json = isset($_GET['callback']) ? (trim($_GET['callback']) . '(' . $json . ')') : $json;
-		// 设置内容类型为jsonp或json
-		self::$contentType = isset($_GET['callback']) ? 'javascript' : 'json';
-		self::send($json);
+		// 因为是传址，可直接改变变量
+		$data = $json;
+		unset($json);
 	}
 }

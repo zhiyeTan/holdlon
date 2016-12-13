@@ -8,19 +8,14 @@ class Application
 {
 	// 异常处理类型
 	private static $exceptionType = 0;
-	
 	// 入口名
 	private static $e;
-	
 	// 模块名
 	private static $m;
-	
 	// 控制器名
 	private static $c;
-	
 	// 操作名
 	private static $a;
-	
 	// 类型和提示映射
 	private static $exceptionMaps = array(
 		ENTRYNOTFOUND			=> '无效的入口！',
@@ -82,50 +77,86 @@ class Application
 		Cookie::init();
 		// 初始化session
 		Session::init();
-		// 检查缓存，若可用则输出
-		Cache::init()->setName(Router::getCacheKey())->get();
-		// 分别对API和站点请求做检查处理
-		if(Router::isAPI()) self::checkMC();
-		else self::checkMVC();
-		// 检查控制器，若存在并执行操作
-		self::checkA('c');
-		// 初始化数据库
+		// 获取缓存
+		$cache = Cache::init()->setName(Router::getCacheKey())->get();
+		// 若不存在缓存数据，进行常规检查
+		if(!$cache)
+		{
+			// 若是API请求则只检查MC
+			if(Router::isAPI())
+			{
+				self::checkMC();
+			}
+			// 若是非API请求则对MVC都做检查
+			else
+			{
+				self::checkMVC();
+			}
+			// 检查控制器，若存在并执行操作
+			self::checkA('c');
+		}
+		// TODO 若存在缓存数据，则认为请求的参数是合法的，直接跳过常规检查，进行数据库初始化
 		Model::init(z::$dbconfig);
-		// 检查模型操作，若存在并执行
-		$data = self::checkA('m');
-		// 分别对API和站点请求做输出处理
-		if(Router::isAPI()) Response::init()->sendJSON($data);
-		else self::render($data);
-	}
-	
-	// 渲染视图
-	public static function render(&$data = null)
-	{
-		// 设置是否使用缓存 [默认使用缓存]
-		$cache = isset($data['cache']) ? $data['cache'] : 1;
-		// 组装模板路径
-		$template = APP_PATH . 'views' . Z_DS . self::$m . Z_DS . self::$c . Z_DS . self::$a . '.php';
-		// 打开缓冲区
-		ob_start();
-		// 载入模板
-		require $template;
-		// 释放变量
-		unset($data);
-		// 获得缓冲内容并清空
-		$content = ob_get_clean();
+		// 初始化响应对象
+		Response::init();
+		// 若存在缓存数据，传给$content，并设置不更新缓存
+		if($cache)
+		{
+			$content = &$cache;
+			Response::setCache(0);
+		}
+		// 若不存在缓存数据，从模型中读取数据
+		else
+		{
+			// 检查模型操作，若存在并执行
+			$data = self::checkA('m');
+			// 初始化响应对象并设置是否使用缓存 [默认使用缓存]
+			Response::setCache(isset($data['cache']) ? $data['cache'] : 1);
+			// 处理API请求
+			if(Router::isAPI())
+			{
+				// 移除cache状态
+				unset($data['cache']);
+				// 格式化数据
+				Response::formatToJSON($data);
+				// 设置响应的内容类型为jsonp或json
+				Response::setContentType(isset($_GET['callback']) ? 'javascript' : 'json');
+				// 传给$content
+				$content = &$data;
+			}
+			// 处理非API请求
+			else
+			{
+				// 组装模板路径
+				$template = APP_PATH . 'views' . Z_DS . self::$m . Z_DS . self::$c . Z_DS . self::$a . '.php';
+				// 打开缓冲区
+				ob_start();
+				// 载入模板
+				require $template;
+				// 释放变量
+				unset($data);
+				// 获得缓冲内容并清空
+				$content = ob_get_clean();
+			}
+		}
 		// 发送响应
-		Response::init()->setCache($cache)->send($content);
+		Response::send($content);
+		// 把$a指向可能存在的记录更新操作并尝试执行
+		self::$a .= 'Record';
+		self::checkA('m', false);
+		exit(0);
 	}
 	
 	// 错误处理
-	public static function exception()
+	private static function exception()
 	{
 		$content = '<div style="padding: 24px 48px;"><h1>&gt;_&lt;|||</h1><p>' . self::$exceptionMaps[self::$exceptionType] . '</p>';
 		Response::init()->setExpire(0)->setCache(0)->send($content);
+		exit(0);
 	}
 	
 	// 检查操作
-	public static function checkA($which = 'c')
+	private static function checkA($which = 'c', $throw = true)
 	{
 		// 定义别名
 		$alias = '\\' . ($which == 'c' ? 'contrallers' : 'models') . '\\' . self::$m . '\\' . self::$c;
@@ -136,17 +167,25 @@ class Application
 		// 检查操作
 		if(!method_exists($object, $method))
 		{
-			// 若不存在模型操作，友好地提示异常
+			if(!$throw)
+			{
+				return false;
+			}
+			// 友好地提示异常
 			self::$exceptionType = $which == 'c' ? C_ACTIONNOTFOUND : M_ACTIONNOTFOUND;
 			self::exception();
 		}
-		// 存在则执行该操作
-		// 返回执行结果
-		return $object->$method();
+		else
+		{
+			// 存在操作则执行并返回结果
+			$result = $object->$method();
+			unset($object);
+			return $result;
+		}
 	}
 	
 	// 检测mvc文件和文件夹是否存在 [针对非API入口]
-	public static function checkMVC()
+	private static function checkMVC()
 	{
 		if(!self::checkE()) self::$exceptionType = ENTRYNOTFOUND;
 		elseif(!self::checkM('m')) self::$exceptionType = M_MODULENOTFOUND;
@@ -164,7 +203,7 @@ class Application
 	}
 	
 	// 检测mc文件和文件夹是否存在 [针对API入口]
-	public static function checkMC()
+	private static function checkMC()
 	{
 		if(!self::checkM('m')) self::$exceptionType = M_MODULENOTFOUND;
 		elseif(!self::checkM('c')) self::$exceptionType = C_MODULENOTFOUND;
@@ -182,7 +221,7 @@ class Application
 	 * @param: string $which [m/v/c]
 	 * @return bool
 	 */
-	public static function checkE()
+	private static function checkE()
 	{
 		$filename = ENTRY_PATH . Z_DS . self::$e . '.php';
 		if(is_file($filename)) return true;
@@ -194,7 +233,7 @@ class Application
 	 * @param: string $which [m/v/c]
 	 * @return bool
 	 */
-	public static function checkM($which = 'c')
+	private static function checkM($which = 'c')
 	{
 		$filename = APP_PATH;
 		switch($which)
@@ -218,7 +257,7 @@ class Application
 	 * @param: string $which [m/v/c]
 	 * @return bool
 	 */
-	public static function checkC($which = 'c')
+	private static function checkC($which = 'c')
 	{
 		$filename = APP_PATH;
 		switch($which)
@@ -241,7 +280,7 @@ class Application
 	 * 检查模板文件是否存在
 	 * @return bool
 	 */
-	public static function checkTemplate()
+	private static function checkTemplate()
 	{
 		$filename = APP_PATH . 'views' . Z_DS . self::$m . Z_DS . self::$c . Z_DS . self::$a . '.php';
 		if(is_file($filename)) return true;
