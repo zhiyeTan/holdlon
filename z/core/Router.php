@@ -92,21 +92,27 @@ class Router
 	 */
 	public static function create($mixed, $static = 0)
 	{
-		if(empty($mixed)) return false;
-		
+		if(empty($mixed))
+		{
+			return false;
+		}
 		// 先赋值主机名
 		$url = $static ? self::$staticDomain : self::$domain;
-		
 		// 确保拿到数组形式的参数
-		if(is_array($mixed)) $query_arr = $mixed;
-		else parse_str($mixed, $query_arr);
-		
+		$query_arr = array();
+		if(is_array($mixed))
+		{
+			$query_arr = $mixed;
+		}
+		else
+		{
+			parse_str($mixed, $query_arr);
+		}
 		// 确保非默认模式的参数中包含入口文件
 		if(self::$pattern != 0 && !isset($query_arr['e']))
 		{
 			$query_arr['e'] = isset($_GET['e']) ? $_GET['e'] : 'index';
 		}
-		
 		switch(self::$pattern)
 		{
 			case 1:

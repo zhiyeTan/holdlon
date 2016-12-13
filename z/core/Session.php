@@ -46,7 +46,10 @@ class Session
 	// 获得session值
 	public static function get($key)
 	{
-		if(empty($_SESSION[$key])) return false;
+		if(empty($_SESSION[$key]))
+		{
+			return false;
+		}
 		return $_SESSION[$key];
 	}
 	

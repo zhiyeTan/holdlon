@@ -120,14 +120,20 @@ class Response
 	// 设置响应状态码
 	public static function setCode($code)
 	{
-		if(in_array($code, array_keys(self::$codeMap))) self::$code = $code;
+		if(in_array($code, array_keys(self::$codeMap)))
+		{
+			self::$code = $code;
+		}
 		return self::$_instance;
 	}
 	
 	// 设置内容类型
 	public static function setContentType($type)
 	{
-		if(in_array($type, array_keys(self::$contentTypeMap))) self::$contentType = $type;
+		if(in_array($type, array_keys(self::$contentTypeMap)))
+		{
+			self::$contentType = $type;
+		}
 		return self::$_instance;
 	}
 	

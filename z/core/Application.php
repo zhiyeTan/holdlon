@@ -44,12 +44,21 @@ class Application
 		{
 			$entryMaps = unserialize(ENTRY_MAPS);
 			// 若存在映射关系则设置为指定应用位置
-			if(isset($entryMaps[self::$e])) define('APP_PATH', dirname(ENTRY_PATH) . Z_DS . $entryMaps[self::$e] . Z_DS); 
+			if(isset($entryMaps[self::$e]))
+			{
+				define('APP_PATH', dirname(ENTRY_PATH) . Z_DS . $entryMaps[self::$e] . Z_DS); 
+			}
 			// 否则设置为当前路径
-			else self::setAppPath();
+			else
+			{
+				self::setAppPath();
+			}
 		}
-		else self::setAppPath();
-    }
+		else
+		{
+			self::setAppPath();
+		}
+	}
 	
 	// 保存EMCA到类属性中
 	private static function setEMCA()
@@ -142,6 +151,16 @@ class Application
 		// 发送响应
 		Response::send($content);
 		// 把$a指向可能存在的记录更新操作并尝试执行
+		/**
+		 * TODO 这里有一个原始的想法
+		 *      就是用一个类的成员去记录需要操作的对象、方法以及参数
+		 *      然后在输出响应之后再去遍历执行这些操作
+		 *      优点是能把所有非可视化的操作优先执行，输出给用户，提高响应速度
+		 *      缺点是代码较为混乱，且不好分离访问性的更新操作（如点击数等）和其他操作（如表单等）
+		 * 
+		 *      目前的做法是统一访问性的更新操作写在逻辑模型里面，再去尝试执行之
+		 *      方法名由原action+Record组成
+		 */
 		self::$a .= 'Record';
 		self::checkA('m', false);
 		exit(0);
@@ -187,15 +206,38 @@ class Application
 	// 检测mvc文件和文件夹是否存在 [针对非API入口]
 	private static function checkMVC()
 	{
-		if(!self::checkE()) self::$exceptionType = ENTRYNOTFOUND;
-		elseif(!self::checkM('m')) self::$exceptionType = M_MODULENOTFOUND;
-		elseif(!self::checkM('v')) self::$exceptionType = V_MODULENOTFOUND;
-		elseif(!self::checkM('c')) self::$exceptionType = C_MODULENOTFOUND;
-		elseif(!self::checkC('m')) self::$exceptionType = M_CONTRALLERNOTFOUND;
-		elseif(!self::checkC('v')) self::$exceptionType = V_GROUPNOTFOUND;
-		elseif(!self::checkC('c')) self::$exceptionType = C_CONTRALLERNOTFOUND;
-		elseif(!self::checkTemplate()) self::$exceptionType = V_TEMPLATENOTFOUND;
-		
+		if(!self::checkE())
+		{
+			self::$exceptionType = ENTRYNOTFOUND;
+		}
+		elseif(!self::checkM('m'))
+		{
+			self::$exceptionType = M_MODULENOTFOUND;
+		}
+		elseif(!self::checkM('v'))
+		{
+			self::$exceptionType = V_MODULENOTFOUND;
+		}
+		elseif(!self::checkM('c'))
+		{
+			self::$exceptionType = C_MODULENOTFOUND;
+		}
+		elseif(!self::checkC('m'))
+		{
+			self::$exceptionType = M_CONTRALLERNOTFOUND;
+		}
+		elseif(!self::checkC('v'))
+		{
+			self::$exceptionType = V_GROUPNOTFOUND;
+		}
+		elseif(!self::checkC('c'))
+		{
+			self::$exceptionType = C_CONTRALLERNOTFOUND;
+		}
+		elseif(!self::checkTemplate())
+		{
+			self::$exceptionType = V_TEMPLATENOTFOUND;
+		}
 		if(self::$exceptionType !== 0)
 		{
 			self::exception();
@@ -205,11 +247,22 @@ class Application
 	// 检测mc文件和文件夹是否存在 [针对API入口]
 	private static function checkMC()
 	{
-		if(!self::checkM('m')) self::$exceptionType = M_MODULENOTFOUND;
-		elseif(!self::checkM('c')) self::$exceptionType = C_MODULENOTFOUND;
-		elseif(!self::checkC('m')) self::$exceptionType = M_CONTRALLERNOTFOUND;
-		elseif(!self::checkC('c')) self::$exceptionType = C_CONTRALLERNOTFOUND;
-		
+		if(!self::checkM('m'))
+		{
+			self::$exceptionType = M_MODULENOTFOUND;
+		}
+		elseif(!self::checkM('c'))
+		{
+			self::$exceptionType = C_MODULENOTFOUND;
+		}
+		elseif(!self::checkC('m'))
+		{
+			self::$exceptionType = M_CONTRALLERNOTFOUND;
+		}
+		elseif(!self::checkC('c'))
+		{
+			self::$exceptionType = C_CONTRALLERNOTFOUND;
+		}
 		if(self::$exceptionType !== 0)
 		{
 			self::exception();
@@ -224,8 +277,14 @@ class Application
 	private static function checkE()
 	{
 		$filename = ENTRY_PATH . Z_DS . self::$e . '.php';
-		if(is_file($filename)) return true;
-		else return false;
+		if(is_file($filename))
+		{
+			return true;
+		}
+		else
+		{
+			return false;
+		}
 	}
 	
 	/**
@@ -248,8 +307,14 @@ class Application
 				$filename .= 'contrallers';
 		}
 		$filename .= Z_DS . self::$m;
-		if(is_dir($filename)) return true;
-		else return false;
+		if(is_dir($filename))
+		{
+			return true;
+		}
+		else
+		{
+			return false;
+		}
 	}
 	
 	/**
@@ -272,8 +337,14 @@ class Application
 			default:
 				$filename .= 'contrallers' . Z_DS . self::$m . Z_DS . self::$c . '.php';
 		}
-		if(($which == 'v' && is_dir($filename)) || ($which != 'v' && is_file($filename))) return true;
-		else return false;
+		if(($which == 'v' && is_dir($filename)) || ($which != 'v' && is_file($filename)))
+		{
+			return true;
+		}
+		else
+		{
+			return false;
+		}
 	}
 	
 	/**
@@ -283,7 +354,13 @@ class Application
 	private static function checkTemplate()
 	{
 		$filename = APP_PATH . 'views' . Z_DS . self::$m . Z_DS . self::$c . Z_DS . self::$a . '.php';
-		if(is_file($filename)) return true;
-		else return false;
+		if(is_file($filename))
+		{
+			return true;
+		}
+		else
+		{
+			return false;
+		}
 	}
 }

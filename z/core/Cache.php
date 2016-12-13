@@ -73,7 +73,10 @@ class Cache
 			fclose($file);
 			return true;
 		}
-		else return false;
+		else
+		{
+			return false;
+		}
 	}
 	
 	/**
@@ -101,6 +104,9 @@ class Cache
 			// 发送响应但不更新缓存
 			//Response::init()->setCache(0)->send($data);
 		}
-		else return false;
+		else
+		{
+			return false;
+		}
 	}
 }

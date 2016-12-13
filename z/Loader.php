@@ -78,15 +78,7 @@ class Loader
 		// 检查类名是否包含"\"
 		if(strpos($className, '\\') !== false)
 		{
-			if(strpos($className, 'z') === false)
-			{
-				
-				$classFile = APP_PATH . strtr($className, array('\\'=>Z_DS)) . '.php';
-			}
-			else
-			{
-				$classFile = LOAD_PATH . strtr($className, array('\\'=>Z_DS)) . '.php';
-			}
+			$classFile = (strpos($className, 'z') === false ? APP_PATH : LOAD_PATH) . strtr($className, array('\\'=>Z_DS)) . '.php';
 			if(!is_file($classFile))
 			{
 				return;

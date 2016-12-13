@@ -64,9 +64,21 @@ class Widget
 	{
 		$fileNameM = self::$widgetM . $name . '.php';
 		$fileNameV = self::$widgetV . $name . '.php';
-		if(!is_file($fileNameM)) self::$exceptionType = 1;
-		elseif(!is_file($fileNameV)) self::$exceptionType = 2;
-		if(self::$exceptionType) return self::exception();
-		else return true;
+		if(!is_file($fileNameM))
+		{
+			self::$exceptionType = 1;
+		}
+		elseif(!is_file($fileNameV))
+		{
+			self::$exceptionType = 2;
+		}
+		if(self::$exceptionType)
+		{
+			return self::exception();
+		}
+		else
+		{
+			return true;
+		}
 	}
 }

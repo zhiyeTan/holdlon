@@ -42,7 +42,10 @@ class Cookie
 	// 获取cookie值
 	public static function get($key)
 	{
-		if(empty($_COOKIE[$key])) return false;
+		if(empty($_COOKIE[$key]))
+		{
+			return false;
+		}
 		return $_COOKIE[$key];
 	}
 	

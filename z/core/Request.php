@@ -14,10 +14,22 @@ class Request
 	 */
 	public static function isSsl()
 	{
-		if(isset($_SERVER['HTTPS']) && ('1' == $_SERVER['HTTPS'] || 'on' == strtolower($_SERVER['HTTPS']))) return true;
-		elseif(isset($_SERVER['REQUEST_SCHEME']) && 'https' == $_SERVER['REQUEST_SCHEME']) return true;
-		elseif(isset($_SERVER['SERVER_PORT']) && ('443' == $_SERVER['SERVER_PORT'])) return true;
-		elseif(isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && 'https' == $_SERVER['HTTP_X_FORWARDED_PROTO']) return true;
+		if(isset($_SERVER['HTTPS']) && ('1' == $_SERVER['HTTPS'] || 'on' == strtolower($_SERVER['HTTPS'])))
+		{
+			return true;
+		}
+		elseif(isset($_SERVER['REQUEST_SCHEME']) && 'https' == $_SERVER['REQUEST_SCHEME'])
+		{
+			return true;
+		}
+		elseif(isset($_SERVER['SERVER_PORT']) && ('443' == $_SERVER['SERVER_PORT']))
+		{
+			return true;
+		}
+		elseif(isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && 'https' == $_SERVER['HTTP_X_FORWARDED_PROTO'])
+		{
+			return true;
+		}
 		return false;
 	}
 	
@@ -69,7 +81,7 @@ class Request
 	 */
 	public static function ip($type = 0, $adv = false)
 	{
-		$type      = $type ? 1 : 0;
+		$type = $type ? 1 : 0;
 		static $ip = null;
 		if(null !== $ip) return $ip[$type];
 		if($adv)
@@ -90,7 +102,8 @@ class Request
 				$ip = $_SERVER['REMOTE_ADDR'];
 			}
 		}
-		elseif (isset($_SERVER['REMOTE_ADDR'])) {
+		elseif(isset($_SERVER['REMOTE_ADDR']))
+		{
 		    $ip = $_SERVER['REMOTE_ADDR'];
 		}
 		// IP地址合法验证
