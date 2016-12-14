@@ -3,10 +3,11 @@
 namespace z;
 
 class Loader
-{	
+{
+	// 类名映射
+	public static $classMap = array();	
 	// 数据库配置
 	public static $dbconfig = array();
-	
 	// 数据库配置的键名
 	public static $dbcfgkey = array('database_type', 'database_name', 'server', 'username', 'password', 'charset', 'port', 'prefix', 'option');
 	
@@ -32,6 +33,10 @@ class Loader
 		define('STATIC_PATH', $CFG['static_path']);
 		// 静态主机名
 		define('STATIC_DOMAIN', $CFG['static_domain']);
+		// 异步处理主机名
+		define('ASYNC_DOMAIN', $CFG['async_domain']);
+		// 异步处理端口
+		define('ASYNC_PORT', $CFG['async_port']);
 		// 服务器缓存有效时间
 		define('CACHE_EXPIRE', (int) $CFG['cache_expire']);
 		// 本地缓存有效时间
@@ -75,8 +80,13 @@ class Loader
 	// 自动加载
 	public static function autoload($className)
 	{
+		// 检查是否存在类名地图中
+		if(isset(static::$classMap[$className]))
+		{
+			$classFile = static::$classMap[$className];
+		}
 		// 检查类名是否包含"\"
-		if(strpos($className, '\\') !== false)
+		elseif(strpos($className, '\\') !== false)
 		{
 			$classFile = (strpos($className, 'z') === false ? APP_PATH : LOAD_PATH) . strtr($className, array('\\'=>Z_DS)) . '.php';
 			if(!is_file($classFile))

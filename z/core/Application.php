@@ -33,12 +33,17 @@ class Application
 	// 构造函数声明为private,防止直接创建对象
 	public function __construct()
 	{
-		// 保存访问时间和IP到iplog中
-		Log::init()->save('iplog', date('Y-m-d H:i:s', $_SERVER['REQUEST_TIME']) . ' ' . Request::ip(0));
 		// 初始化路由器并解析当前请求
 		Router::init()->parse();
-		// 设置当前emca属性
-		self::setEMCA();
+		// 判断是否为异步操作入口
+		if(Router::getEntryType() == 'async')
+		{
+			// 执行异步操作，完成后终止程序
+			self::asyncRun();
+			exit(0);
+		}
+		// 获得当前emca属性
+		self::getEMCA();
 		// 配置应用位置
     	if(isset(self::$e))
 		{
@@ -61,7 +66,7 @@ class Application
 	}
 	
 	// 保存EMCA到类属性中
-	private static function setEMCA()
+	private static function getEMCA()
 	{
 		self::$e = $_GET['e'];
 		self::$m = $_GET['m'];
@@ -82,6 +87,10 @@ class Application
 	 */
 	public static function run()
 	{
+		// 绑定一个异步的关于访问时间和ip的日志记录操作的post请求
+		Async::on('post', 'z\core\log', 'save', array('iplog', date('Y-m-d H:i:s', $_SERVER['REQUEST_TIME']) . ' ' . Request::ip(0)));
+		// 取得入口类型
+		$type = Router::getEntryType();
 		// 初始化cookie
 		Cookie::init();
 		// 初始化session
@@ -92,7 +101,7 @@ class Application
 		if(!$cache)
 		{
 			// 若是API请求则只检查MC
-			if(Router::isAPI())
+			if($type == 'api')
 			{
 				self::checkMC();
 			}
@@ -122,7 +131,7 @@ class Application
 			// 初始化响应对象并设置是否使用缓存 [默认使用缓存]
 			Response::setCache(isset($data['cache']) ? $data['cache'] : 1);
 			// 处理API请求
-			if(Router::isAPI())
+			if($type == 'api')
 			{
 				// 移除cache状态
 				unset($data['cache']);
@@ -148,8 +157,6 @@ class Application
 				$content = ob_get_clean();
 			}
 		}
-		// 发送响应
-		Response::send($content);
 		// 把$a指向可能存在的记录更新操作并尝试执行
 		/**
 		 * TODO 这里有一个原始的想法
@@ -163,6 +170,10 @@ class Application
 		 */
 		self::$a .= 'Record';
 		self::checkA('m', false);
+		// 触发可能存在的异步请求
+		Async::trigger();
+		// 发送响应
+		Response::send($content);
 		exit(0);
 	}
 	
@@ -347,10 +358,7 @@ class Application
 		}
 	}
 	
-	/**
-	 * 检查模板文件是否存在
-	 * @return bool
-	 */
+	// 检查模板文件是否存在
 	private static function checkTemplate()
 	{
 		$filename = APP_PATH . 'views' . Z_DS . self::$m . Z_DS . self::$c . Z_DS . self::$a . '.php';
@@ -361,6 +369,25 @@ class Application
 		else
 		{
 			return false;
+		}
+	}
+	
+	/**
+	 * 
+	 */
+	private static function asyncRun()
+	{
+		// TODO 此处添加对于GET请求的处理（目前尚未出现需要通过GET请求去处理的操作）
+		if(empty($_POST['data']))
+		{
+			return;
+		}
+		$data = unserialize($_POST['data']);
+		foreach($data as $act)
+		{
+			$object = new $act['objectName']();
+			call_user_func_array(array($object, $act['methodName']), $act['args']);
+			unset($object);
 		}
 	}
 }

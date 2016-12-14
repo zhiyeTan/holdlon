@@ -33,8 +33,8 @@ class Router
     // 基本字符
     private static $baseChar = "0aAbBcC1dDeEfF2gGhHiI3jJkKlL4mMnNoO5pPqQrR6sStTuU7vVwWxX8yYzZ9";
 	
-	// 是否api接口
-	private static $isAPI = false;
+	// 入口类型
+	private static $entryType = 'default';
 	
 	// 保存唯一缓存标识
 	private static $cacheKey;
@@ -78,10 +78,10 @@ class Router
 		return self::$cacheKey;
 	}
 	
-	// 是否API请求
-	public static function isAPI()
+	// 返回入口类型
+	public static function getEntryType()
 	{
-		return self::$isAPI;
+		return self::$entryType;
 	}
 	
 	/**
@@ -169,7 +169,7 @@ class Router
 				// 强制API使用此模式，且不建议非API入口使用此模式
 				$url .= '/' . $query_arr['e'] . '/' . $query_arr['m'] . '/' . $query_arr['c'] . '/' . $query_arr['a'] . '/';
 				unset($query_arr['e'], $query_arr['m'], $query_arr['c'], $query_arr['a']);
-				$url .= preg_replace('[=|&]', '/', http_build_query($query_arr));
+				$url .= strtr(http_build_query($query_arr), '=&', '//');
 				break;
 			default:
 				$url .= '/' . (isset($query_arr['e']) ? $query_arr['e'] . '.php' : self::$selfScript) . '?' . http_build_query($query_arr);
@@ -200,11 +200,11 @@ class Router
 			$queryArr = array($tmps[0]);
 		}
 		
-		// 将API请求强制重置为路由1模式并标记为API接口
-		if(isset($queryArr[0]) && $queryArr[0] == 'api')
+		// 将API/Async请求强制重置为路由3模式并标记为入口类型
+		if(isset($queryArr[0]) && ($queryArr[0] == 'api' || $queryArr[0] == 'async'))
 		{
 			self::$pattern = 3;
-			self::$isAPI = true;
+			self::$entryType = $queryArr[0];
 		}
 		
 		// 把不合法的get参数清空

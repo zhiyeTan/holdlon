@@ -33,41 +33,31 @@ class Request
 		return false;
 	}
 	
-	/**
-	 * 当前URL地址中的scheme参数
-	 * @access public
-	 * @return string
-	 */
+	// 获得当前端口
+	public static function port()
+	{
+		return $_SERVER['SERVER_PORT'];
+	}
+	
+	// 当前URL地址中的scheme参数
 	public static function scheme()
 	{
 		return self::isSsl() ? 'https' : 'http';
 	}
 	
-	/**
-	 * 获取当前包含协议的域名
-	 * @access public
-	 * @return string
-	 */
+	// 获取当前包含协议的域名
 	public static function domain()
 	{
 		return self::scheme() . '://' . $_SERVER['HTTP_HOST'];
 	}
 	
-	/**
-	 * 获取静态资源所在的包含协议的域名
-	 * @access public
-	 * @return string
-	 */
+	// 获取静态资源所在的包含协议的域名
 	public static function staticDomain()
 	{
 		return self::scheme() . '://' . STATIC_DOMAIN;
 	}
 	
-	/**
-	 * 获取cookie/session需设置的域
-	 * @access public
-	 * @return string
-	 */
+	// 获取cookie/session需设置的域
 	public static function cosDomain()
 	{
 		return substr($_SERVER['HTTP_HOST'], strpos($_SERVER['HTTP_HOST'], '.'));

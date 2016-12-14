@@ -19,8 +19,14 @@ return array(
 	// 静态资源目录(单点部署时无效)
 	'static_path'		=> 'z_static',
 	
-	// 静态资源的域名前缀(单点部署时无效)
+	// 静态资源的域名(单点部署时无效)
 	'static_domain'		=> 'static.z.com',
+	
+	// 异步操作的域名(空值表示与当前请求域名一致)
+	'async_domain'		=> '',
+	
+	// 异步操作的端口(空值表示与当前请求端口一致)
+	'async_port'		=> '',
 	
 	/**
 	 * 路由设置，共有以下4种路由模式：
@@ -29,7 +35,7 @@ return array(
 	 * 2、协议名://主机名/模块名称(index时省略)/由md5(query_string)后截取得到的长度为6的字符串.html
 	 * 3、协议名://主机名/入口文件/模块名称/控制器名称/操作名称/key/value/key/value...
 	 */
-	'route_pattern'		=> 2,
+	'route_pattern'		=> 1,
 	
 	// 调试模式
 	'app_debug'			=> true,
