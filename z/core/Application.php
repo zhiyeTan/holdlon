@@ -157,6 +157,8 @@ class Application
 				$content = ob_get_clean();
 			}
 		}
+		// 发送响应
+		Response::send($content);
 		// 把$a指向可能存在的记录更新操作并尝试执行
 		/**
 		 * TODO 这里有一个原始的想法
@@ -172,8 +174,6 @@ class Application
 		self::checkA('m', false);
 		// 触发可能存在的异步请求
 		Async::trigger();
-		// 发送响应
-		Response::send($content);
 		exit(0);
 	}
 	

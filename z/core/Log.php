@@ -10,8 +10,8 @@ class Log
 	public function __construct()
 	{
 		self::$path = Z_PATH . Z_DS . 'log' . Z_DS;
-		// 设置日志大小上限为5m
-		self::$maxSize = 5242880;
+		// 设置日志大小上限为2m
+		self::$maxSize = 2097152;
 		// log文件夹不存在则创建并赋值权限
 		if(!is_dir(self::$path))
 		{

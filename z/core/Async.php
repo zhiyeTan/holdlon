@@ -73,6 +73,8 @@ class Async
 		}
 		// 发送异步请求
 		$socket = fsockopen($host, $port, $errno, $errstr, $timeout);
+		// 设置为非阻塞模式
+		stream_set_blocking($socket, 0);
 		fputs($socket, $request);
 		fclose($socket);
 	}
