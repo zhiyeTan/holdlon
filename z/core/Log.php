@@ -6,8 +6,11 @@ class Log
 {
 	private static $path;
 	private static $maxSize;
+	// 保存例实例在此属性中
+	private static $_instance;
 	
-	public function __construct()
+	// 构造函数声明为private,防止直接创建对象
+	private function __construct()
 	{
 		self::$path = Z_PATH . Z_DS . 'log' . Z_DS;
 		// 设置日志大小上限为2m
@@ -20,12 +23,29 @@ class Log
 		}
 	}
 	
+	// 单例方法，初始化对象
+	public static function init()
+	{
+		if(!isset(self::$_instance))
+		{
+			$c = __CLASS__;
+			self::$_instance = new $c();
+		}
+		return self::$_instance;
+	}
+	
+	// 阻止用户复制对象实例
+	public function __clone()
+	{
+		trigger_error('Clone is not allow' , E_USER_ERROR);
+	}
+	
 	/**
 	 * 保存日志
 	 * @param: string $name 日志文件名
 	 * @param: string $content 单条日志的内容
 	 */
-	public function save($name, $content)
+	public static function save($name, $content)
 	{
 		$nosuffix = self::$path . $name;
 		$filename = $nosuffix . '.txt';

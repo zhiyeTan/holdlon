@@ -39,7 +39,7 @@ class Application
 		if(Router::getEntryType() == 'async')
 		{
 			// 执行异步操作，完成后终止程序
-			self::asyncRun();
+			Tunnel::runAsync();
 			exit(0);
 		}
 		// 获得当前emca属性
@@ -87,8 +87,8 @@ class Application
 	 */
 	public static function run()
 	{
-		// 绑定一个异步的关于访问时间和ip的日志记录操作的post请求
-		Async::on('post', 'z\core\log', 'save', array('iplog', date('Y-m-d H:i:s', $_SERVER['REQUEST_TIME']) . ' ' . Request::ip(0)));
+		// 绑定一个异步的关于访问时间和ip的日志记录操作的post请求到通道中
+		Tunnel::onAsync('post', 'z\core\log', 'save', 1, array('iplog', date('Y-m-d H:i:s', $_SERVER['REQUEST_TIME']) . ' ' . Request::ip(0)));
 		// 取得入口类型
 		$type = Router::getEntryType();
 		// 初始化cookie
@@ -159,21 +159,8 @@ class Application
 		}
 		// 发送响应
 		Response::send($content);
-		// 把$a指向可能存在的记录更新操作并尝试执行
-		/**
-		 * TODO 这里有一个原始的想法
-		 *      就是用一个类的成员去记录需要操作的对象、方法以及参数
-		 *      然后在输出响应之后再去遍历执行这些操作
-		 *      优点是能把所有非可视化的操作优先执行，输出给用户，提高响应速度
-		 *      缺点是代码较为混乱，且不好分离访问性的更新操作（如点击数等）和其他操作（如表单等）
-		 * 
-		 *      目前的做法是统一访问性的更新操作写在逻辑模型里面，再去尝试执行之
-		 *      方法名由原action+Record组成
-		 */
-		self::$a .= 'Record';
-		self::checkA('m', false);
-		// 触发可能存在的异步请求
-		Async::trigger();
+		// 执行放进通道中的操作
+		Tunnel::trigger();
 		exit(0);
 	}
 	
@@ -372,22 +359,4 @@ class Application
 		}
 	}
 	
-	/**
-	 * 
-	 */
-	private static function asyncRun()
-	{
-		// TODO 此处添加对于GET请求的处理（目前尚未出现需要通过GET请求去处理的操作）
-		if(empty($_POST['data']))
-		{
-			return;
-		}
-		$data = unserialize($_POST['data']);
-		foreach($data as $act)
-		{
-			$object = new $act['objectName']();
-			call_user_func_array(array($object, $act['methodName']), $act['args']);
-			unset($object);
-		}
-	}
 }

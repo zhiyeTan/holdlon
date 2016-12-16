@@ -49,7 +49,7 @@ class Loader
 		define('ENTRY_MAPS', serialize($CFG['entry_maps']));
 		// session有效时间
 		define('SESSION_EXPIRE', $CFG['session_expire']);
-		// session有效时间
+		// cookie有效时间
 		define('COOKIE_EXPIRE', $CFG['cookie_expire']);
 		
 		// 定义MVC错误类型常量
