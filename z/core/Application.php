@@ -8,6 +8,10 @@ class Application
 {
 	// 异常处理类型
 	private static $exceptionType = 0;
+	// 是否使用缓存
+	private static $noCache = 0;
+	// 入口类型
+	private static $entryType;
 	// 入口名
 	private static $e;
 	// 模块名
@@ -35,33 +39,41 @@ class Application
 	{
 		// 初始化路由器并解析当前请求
 		Router::init()->parse();
-		// 判断是否为异步操作入口
-		if(Router::getEntryType() == 'async')
-		{
-			// 执行异步操作，完成后终止程序
-			self::asyncRun();
-			exit(0);
-		}
 		// 获得当前emca属性
 		self::getEMCA();
-		// 配置应用位置
-    	if(isset(self::$e))
+		// 设置入口类型
+		self::$entryType = Router::getEntryType();
+		// 获得位置映射
+		$entryMaps = unserialize(ENTRY_MAPS);
+		// 若为异步入口，重设$e为$m(异步请求下$m为提交异步请求的来源入口)
+		if(self::$entryType == 'async')
 		{
-			$entryMaps = unserialize(ENTRY_MAPS);
-			// 若存在映射关系则设置为指定应用位置
-			if(isset($entryMaps[self::$e]))
-			{
-				define('APP_PATH', dirname(ENTRY_PATH) . Z_DS . $entryMaps[self::$e] . Z_DS); 
-			}
-			// 否则设置为当前路径
-			else
-			{
-				self::setAppPath();
-			}
+			self::$e = self::$m;
 		}
+		// 若存在映射关系则设置为指定应用位置
+		if(isset($entryMaps[self::$e]))
+		{
+			define('APP_PATH', dirname(ENTRY_PATH) . Z_DS . $entryMaps[self::$e] . Z_DS); 
+		}
+		// 否则设置为当前路径
 		else
 		{
 			self::setAppPath();
+		}
+		// 判断是否为异步操作入口
+		if(self::$entryType == 'async')
+		{
+			// 执行异步操作，完成后终止程序
+			Tunnel::runAsync();
+			exit(0);
+		}
+		
+		// 获得缓存状态映射
+		$cacheMaps = unserialize(NO_CACHE_ENTRY);
+		// 若存在映射则设置为不使用缓存
+		if(isset($cacheMaps[self::$e]))
+		{
+			self::$noCache = 1;
 		}
 	}
 	
@@ -87,21 +99,19 @@ class Application
 	 */
 	public static function run()
 	{
-		// 绑定一个异步的关于访问时间和ip的日志记录操作的post请求
-		Async::on('post', 'z\core\log', 'save', array('iplog', date('Y-m-d H:i:s', $_SERVER['REQUEST_TIME']) . ' ' . Request::ip(0)));
-		// 取得入口类型
-		$type = Router::getEntryType();
+		// 绑定一个异步的关于访问时间和ip的日志记录操作的post请求到通道中
+		Tunnel::onAsync('post', 'z\core\log', 'save', 1, array('iplog', date('Y-m-d H:i:s', $_SERVER['REQUEST_TIME']) . ' ' . Request::ip(0)));
 		// 初始化cookie
 		Cookie::init();
 		// 初始化session
 		Session::init();
-		// 获取缓存
-		$cache = Cache::init()->setName(Router::getCacheKey())->get();
+		// 若不使用缓存则设置缓存为false，否则获取真实的缓存
+		$cache = self::$noCache ? !1 : Cache::init()->setName(Router::getCacheKey())->get();
 		// 若不存在缓存数据，进行常规检查
 		if(!$cache)
 		{
 			// 若是API请求则只检查MC
-			if($type == 'api')
+			if(self::$entryType == 'api')
 			{
 				self::checkMC();
 			}
@@ -131,7 +141,7 @@ class Application
 			// 初始化响应对象并设置是否使用缓存 [默认使用缓存]
 			Response::setCache(isset($data['cache']) ? $data['cache'] : 1);
 			// 处理API请求
-			if($type == 'api')
+			if(self::$entryType == 'api')
 			{
 				// 移除cache状态
 				unset($data['cache']);
@@ -159,21 +169,8 @@ class Application
 		}
 		// 发送响应
 		Response::send($content);
-		// 把$a指向可能存在的记录更新操作并尝试执行
-		/**
-		 * TODO 这里有一个原始的想法
-		 *      就是用一个类的成员去记录需要操作的对象、方法以及参数
-		 *      然后在输出响应之后再去遍历执行这些操作
-		 *      优点是能把所有非可视化的操作优先执行，输出给用户，提高响应速度
-		 *      缺点是代码较为混乱，且不好分离访问性的更新操作（如点击数等）和其他操作（如表单等）
-		 * 
-		 *      目前的做法是统一访问性的更新操作写在逻辑模型里面，再去尝试执行之
-		 *      方法名由原action+Record组成
-		 */
-		self::$a .= 'Record';
-		self::checkA('m', false);
-		// 触发可能存在的异步请求
-		Async::trigger();
+		// 执行放进通道中的操作
+		Tunnel::trigger();
 		exit(0);
 	}
 	
@@ -372,22 +369,4 @@ class Application
 		}
 	}
 	
-	/**
-	 * 
-	 */
-	private static function asyncRun()
-	{
-		// TODO 此处添加对于GET请求的处理（目前尚未出现需要通过GET请求去处理的操作）
-		if(empty($_POST['data']))
-		{
-			return;
-		}
-		$data = unserialize($_POST['data']);
-		foreach($data as $act)
-		{
-			$object = new $act['objectName']();
-			call_user_func_array(array($object, $act['methodName']), $act['args']);
-			unset($object);
-		}
-	}
 }

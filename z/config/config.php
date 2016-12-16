@@ -58,6 +58,9 @@ return array(
 									'api'		=> 'api'
 								),
 	
+	// 不使用缓存的入口应用
+	'no_cache_entry'	=> array(),
+	
 	// 必要的数据库配置
 	'database_type'		=> 'mysql',
 	'database_name'		=> 'holon',

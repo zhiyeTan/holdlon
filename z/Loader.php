@@ -47,9 +47,11 @@ class Loader
 		define('DEFAULT_LANG', $CFG['default_lang']);
 		// 入口与位置地图
 		define('ENTRY_MAPS', serialize($CFG['entry_maps']));
+		// 不使用缓存的入口英文
+		define('NO_CACHE_ENTRY', serialize($CFG['no_cache_entry']));
 		// session有效时间
 		define('SESSION_EXPIRE', $CFG['session_expire']);
-		// session有效时间
+		// cookie有效时间
 		define('COOKIE_EXPIRE', $CFG['cookie_expire']);
 		
 		// 定义MVC错误类型常量

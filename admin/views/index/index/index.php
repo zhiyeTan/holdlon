@@ -1,6 +1,5 @@
 <?php
-use z\core\widget as Widget;
-$widget = Widget::init();
+$widget = z\core\widget::init();
 ?>
 <!DOCTYPE html>
 <html>
@@ -29,7 +28,7 @@ $widget = Widget::init();
 						<td>{$l.cat_name}</td>
 						<td><i class="dashicons dashicons-icon-{if $l.is_hot}yes{else}no{/if}"></i></td>
 						<td class="rpm-text-align-left">
-							<a class="rpm-handle_btn" href="{$h.url}{$only_param}{$l.arc_id}"{if $h.key eq 'del'} onclick="return confirm('{$lang.del_confirm}')"{/if} title="{$h.name}"><i class="iconfont icon-handle-btn-{$h.key}"></i></a>
+							<a class="rpm-handle_btn" href="#" title="删除"><i class="iconfont icon-handle-btn-del"></i></a>
 						</td>
 					</tr>
 				</tbody>
