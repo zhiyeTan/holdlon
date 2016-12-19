@@ -66,8 +66,12 @@ class Tunnel
 		$timeout = 100;
 		// 默认为get请求
 		$method = 'GET';
+<<<<<<< HEAD
 		// 设置异步请求的emca参数分别为：async，来源入口，来源模块，来源控制器
 		$target = '/async/' . $_GET['e'] . '/' . $_GET['m'] . '/' . $_GET['c'];
+=======
+		$target = '/async';
+>>>>>>> 9ad387d6ace1e8beea0c830d9007670c298ca83b
 		// 如果没有异步请求，直接退出
 		if(empty(self::$asyncMaps))
 		{
@@ -104,6 +108,7 @@ class Tunnel
 		// 设置为非阻塞模式
 		stream_set_blocking($socket, 0);
 		fputs($socket, $request);
+<<<<<<< HEAD
 		/*
 		// 异步调试
 		while(!feof($socket))
@@ -111,6 +116,8 @@ class Tunnel
 			echo fgets($socket, 4096), PHP_EOL;
 		}
 		//*/
+=======
+>>>>>>> 9ad387d6ace1e8beea0c830d9007670c298ca83b
 		fclose($socket);
 	}
 	
