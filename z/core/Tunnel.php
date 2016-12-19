@@ -65,9 +65,19 @@ class Tunnel
 		$port = ASYNC_PORT ? ASYNC_PORT : Request::port();
 		$timeout = 100;
 		// 默认为get请求
+<<<<<<< HEAD
 		$method = 'GET';
 		// 设置异步请求的emca参数分别为：async，来源入口，来源模块，来源控制器
 		$target = '/async/' . $_GET['e'] . '/' . $_GET['m'] . '/' . $_GET['c'];
+=======
+		$method = 'GET';
+<<<<<<< HEAD
+		// 设置异步请求的emca参数分别为：async，来源入口，来源模块，来源控制器
+		$target = '/async/' . $_GET['e'] . '/' . $_GET['m'] . '/' . $_GET['c'];
+=======
+		$target = '/async';
+>>>>>>> 9ad387d6ace1e8beea0c830d9007670c298ca83b
+>>>>>>> 74c3b965066e939c922f0e996baf5ba0d3b4268e
 		// 如果没有异步请求，直接退出
 		if(empty(self::$asyncMaps))
 		{
