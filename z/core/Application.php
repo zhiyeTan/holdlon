@@ -105,9 +105,11 @@ class Application
 		Cookie::init();
 		// 初始化session
 		Session::init();
+		// 初始化响应对象
+		Response::init();
 		// 若不使用缓存则设置缓存为false，否则获取真实的缓存
 		$cache = self::$noCache ? !1 : Cache::init()->setName(Router::getCacheKey())->get();
-		// 若不存在缓存数据，进行常规检查
+		// 若不存在缓存，进行常规检查
 		if(!$cache)
 		{
 			// 若是API请求则只检查MC
@@ -120,22 +122,23 @@ class Application
 			{
 				self::checkMVC();
 			}
-			// 检查控制器，若存在并执行操作
-			self::checkA('c');
 		}
-		// TODO 若存在缓存数据，则认为请求的参数是合法的，直接跳过常规检查，进行数据库初始化
-		Model::init(z::$dbconfig);
-		// 初始化响应对象
-		Response::init();
-		// 若存在缓存数据，传给$content，并设置不更新缓存
+		// TODO 若系统没有登录验证，可把控制器操作写到if(!$cache){...}中
+		// 检查控制器操作，若存在并执行
+		self::checkA('c');
+		// 若存在缓存数据，传给$content，并设置不更新缓存，响应状态码为304
 		if($cache)
 		{
+			unset($data);
 			$content = &$cache;
 			Response::setCache(0);
+			Response::setCode(304);
 		}
 		// 若不存在缓存数据，从模型中读取数据
 		else
 		{
+			// 初始化数据库
+			Model::init(z::$dbconfig);
 			// 检查模型操作，若存在并执行
 			$data = self::checkA('m');
 			// 初始化响应对象并设置是否使用缓存 [默认使用缓存]
@@ -171,6 +174,14 @@ class Application
 		Response::send($content);
 		// 执行放进通道中的操作
 		Tunnel::trigger();
+		// 存在缓存的情况下，必须先初始化数据库
+		if($cache)
+		{
+			// 初始化数据库
+			Model::init(z::$dbconfig);
+		}
+		// 尝试执行延后的逻辑操作
+		self::tryDelayedLogic();
 		exit(0);
 	}
 	
@@ -178,12 +189,28 @@ class Application
 	private static function exception()
 	{
 		$content = '<div style="padding: 24px 48px;"><h1>&gt;_&lt;|||</h1><p>' . self::$exceptionMaps[self::$exceptionType] . '</p>';
-		Response::init()->setExpire(0)->setCache(0)->send($content);
+		Response::init()->setExpire(0)->setCache(0)->setCode(404)->send($content);
 		exit(0);
 	}
 	
+	// 尝试执行延后的逻辑操作
+	private static function tryDelayedLogic()
+	{
+		// 定义别名
+		$alias = '\\' . ($which == 'c' ? 'contrallers' : 'models') . '\\' . self::$m . '\\' . self::$c;
+		// 定义操作名
+		$method = self::$a . 'DelayAction';
+		// 初始化对象
+		$object = new $alias();
+		// 存在操作就执行它
+		if(method_exists($object, $method))
+		{
+			$object->$method();
+		}
+	}
+	
 	// 检查操作
-	private static function checkA($which = 'c', $throw = true)
+	private static function checkA($which = 'c')
 	{
 		// 定义别名
 		$alias = '\\' . ($which == 'c' ? 'contrallers' : 'models') . '\\' . self::$m . '\\' . self::$c;
@@ -194,10 +221,6 @@ class Application
 		// 检查操作
 		if(!method_exists($object, $method))
 		{
-			if(!$throw)
-			{
-				return false;
-			}
 			// 友好地提示异常
 			self::$exceptionType = $which == 'c' ? C_ACTIONNOTFOUND : M_ACTIONNOTFOUND;
 			self::exception();
@@ -206,7 +229,6 @@ class Application
 		{
 			// 存在操作则执行并返回结果
 			$result = $object->$method();
-			unset($object);
 			return $result;
 		}
 	}

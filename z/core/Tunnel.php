@@ -155,10 +155,14 @@ class Tunnel
 				{
 					$object = new $act['objectName']();
 				}
-				// 利用回调函数执行操作
-				call_user_func_array(array($object, $act['methodName']), $act['args']);
-				// 立即释放对象
-				unset($object);	
+				// 检查类是否存在方法
+				if(method_exists($object, $act['methodName']))
+				{
+					// 利用回调函数执行操作
+					call_user_func_array(array($object, $act['methodName']), $act['args']);
+					// 立即释放对象
+					unset($object);	
+				}
 			}
 		}
 	}
