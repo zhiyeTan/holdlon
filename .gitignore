@@ -3,3 +3,5 @@ maps
 cache
 /.project
 /z/log/*.txt
+/admin/log/*.txt
+/application/log/*.txt
