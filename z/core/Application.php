@@ -39,6 +39,19 @@ class Application
 	{
 		// 初始化路由器并解析当前请求
 		Router::init()->parse();
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+=======
+		// 判断是否为异步操作入口
+		if(Router::getEntryType() == 'async')
+		{
+			// 执行异步操作，完成后终止程序
+			Tunnel::runAsync();
+			exit(0);
+		}
+>>>>>>> 9ad387d6ace1e8beea0c830d9007670c298ca83b
+>>>>>>> 74c3b965066e939c922f0e996baf5ba0d3b4268e
 		// 获得当前emca属性
 		self::getEMCA();
 		// 设置入口类型
@@ -101,6 +114,14 @@ class Application
 	{
 		// 绑定一个异步的关于访问时间和ip的日志记录操作的post请求到通道中
 		Tunnel::onAsync('post', 'z\core\log', 'save', 1, array('iplog', date('Y-m-d H:i:s', $_SERVER['REQUEST_TIME']) . ' ' . Request::ip(0)));
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+=======
+		// 取得入口类型
+		$type = Router::getEntryType();
+>>>>>>> 9ad387d6ace1e8beea0c830d9007670c298ca83b
+>>>>>>> 74c3b965066e939c922f0e996baf5ba0d3b4268e
 		// 初始化cookie
 		Cookie::init();
 		// 初始化session
