@@ -11,4 +11,8 @@ class index
 		$data = admin::R();
 		return $data;
 	}
+	public function login()
+	{
+		
+	}
 }

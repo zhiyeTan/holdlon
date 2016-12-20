@@ -67,7 +67,8 @@ class Application
 			Tunnel::runAsync();
 			exit(0);
 		}
-		
+		// 加载类名映射
+		z::$classMap = require(Z_PATH . Z_DS . 'ClassMaps.php');
 		// 获得缓存状态映射
 		$cacheMaps = unserialize(NO_CACHE_ENTRY);
 		// 若存在映射则设置为不使用缓存
@@ -197,7 +198,7 @@ class Application
 	private static function tryDelayedLogic()
 	{
 		// 定义别名
-		$alias = '\\' . ($which == 'c' ? 'contrallers' : 'models') . '\\' . self::$m . '\\' . self::$c;
+		$alias = '\\models\\' . self::$m . '\\' . self::$c;
 		// 定义操作名
 		$method = self::$a . 'DelayAction';
 		// 初始化对象

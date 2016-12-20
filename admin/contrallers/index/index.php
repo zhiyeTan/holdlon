@@ -2,9 +2,14 @@
 
 namespace contrallers\index;
 
-class index
+class index extends \admin\Contraller
 {
-	public static function index()
+	public function index()
+	{
+		self::chkLogin();
+	}
+	
+	public function login()
 	{
 		
 	}

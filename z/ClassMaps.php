@@ -1,8 +1,7 @@
 <?php
-/**
- * 核心类地图.
- */
+	
+//类名映射
 
 return array(
-  'classAlias' => Z_PATH . '/path/classFileName.php',
+  'admin\Contraller' => APP_PATH . 'Contraller.php',
 );
