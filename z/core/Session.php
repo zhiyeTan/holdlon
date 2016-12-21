@@ -53,6 +53,19 @@ class Session
 		return $_SESSION[$key];
 	}
 	
+	// 设置并返回安全令牌
+	public static function getToken()
+	{
+		$token = self::get('formToken');
+		if($token)
+		{
+			return $token;
+		}
+		$token = md5(session_name() . time());
+		self::set('formToken', $token);
+		return $token;
+	}
+	
 	// 删除session
 	public static function delete($key)
 	{

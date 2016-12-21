@@ -43,7 +43,7 @@ class Application
 		self::getEMCA();
 		// 设置入口类型
 		self::$entryType = Router::getEntryType();
-		// 获得位置映射
+		// 加载入口与应用位置映射
 		$entryMaps = unserialize(ENTRY_MAPS);
 		// 若为异步入口，重设$e为$m(异步请求下$m为提交异步请求的来源入口)
 		if(self::$entryType == 'async')
@@ -69,7 +69,7 @@ class Application
 		}
 		// 加载类名映射
 		z::$classMap = require(Z_PATH . Z_DS . 'ClassMaps.php');
-		// 获得缓存状态映射
+		// 加载缓存状态映射
 		$cacheMaps = unserialize(NO_CACHE_ENTRY);
 		// 若存在映射则设置为不使用缓存
 		if(isset($cacheMaps[self::$e]))
