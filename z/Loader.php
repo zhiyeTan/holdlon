@@ -55,16 +55,10 @@ class Loader
 		define('COOKIE_EXPIRE', $CFG['cookie_expire']);
 		
 		// 定义MVC错误类型常量
-		define('ENTRYNOTFOUND', 1);        // 入口不存在
-		define('M_MODULENOTFOUND', 2);     // M模块不存在
-		define('V_MODULENOTFOUND', 3);     // V模块不存在
-		define('C_MODULENOTFOUND', 4);     // C模块不存在
-		define('M_CONTRALLERNOTFOUND', 5); // M控制器不存在
-		define('V_GROUPNOTFOUND', 6);      // V模块子分组不存在
-		define('C_CONTRALLERNOTFOUND', 7); // C控制器不存在
-		define('M_ACTIONNOTFOUND', 8);     // M操作不存在
-		define('V_TEMPLATENOTFOUND', 9);   // V模板不存在
-		define('C_ACTIONNOTFOUND', 10);     // C操作不存在
+		define('INVALID_ENTRY', 1);        // 无效的入口
+		define('INVALID_MODULE', 2);       // 无效的模块
+		define('INVALID_CONTRALLER', 3);   // 无效的控制器
+		define('INVALID_ACTION', 4);       // 无效的操作
 		
 		// 数据库配置项
 		foreach(self::$dbcfgkey as $v)

@@ -5,9 +5,9 @@ namespace admin;
 use z\core\Session as Session;
 use z\core\Router as Router;
 
-class Contraller
+class adminContraller extends \z\core\Contraller
 {
-	public static function chkLogin()
+	protected static function chkLogin()
 	{
 		// 登录状态
 		$status = Session::get('loginStatus');

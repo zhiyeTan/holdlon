@@ -9,7 +9,7 @@ use PDO;
  * Copyright 2016, Angel Lai
  * Released under the MIT license
  */
-class Model {
+class Medoo {
 	// General
 	protected $database_type;
 

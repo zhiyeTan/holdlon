@@ -33,9 +33,6 @@ class Router
     // 基本字符
     private static $baseChar = "0aAbBcC1dDeEfF2gGhHiI3jJkKlL4mMnNoO5pPqQrR6sStTuU7vVwWxX8yYzZ9";
 	
-	// 入口类型
-	private static $entryType = 'default';
-	
 	// 保存唯一缓存标识
 	private static $cacheKey;
 	
@@ -46,12 +43,16 @@ class Router
 		self::$domain = Request::domain();
 		self::$staticDomain = Request::staticDomain();
 		self::$selfScript = basename($_SERVER['SCRIPT_NAME']);
-		self::$urlMaps = Z_PATH . Z_DS . 'maps' . Z_DS;
-		// cache文件夹不存在则创建并赋值权限
-		if(!is_dir(self::$urlMaps))
+		// 若路由为短地址模式，设置路径并检查
+		if(ROUTE_PATTERN == 2)
 		{
-			mkdir(self::$urlMaps);
-			chmod(self::$urlMaps, 0777);
+			self::$urlMaps = Z_PATH . Z_DS . 'maps' . Z_DS;
+			// cache文件夹不存在则创建并赋值权限
+			if(!is_dir(self::$urlMaps))
+			{
+				mkdir(self::$urlMaps);
+				chmod(self::$urlMaps, 0777);
+			}
 		}
 	}
 	
@@ -76,12 +77,6 @@ class Router
 	public static function getCacheKey()
 	{
 		return self::$cacheKey;
-	}
-	
-	// 返回入口类型
-	public static function getEntryType()
-	{
-		return self::$entryType;
 	}
 	
 	/**
@@ -200,11 +195,10 @@ class Router
 			$queryArr = array($tmps[0]);
 		}
 		
-		// 将API/Async请求强制重置为路由3模式并标记为入口类型
+		// 将API/Async请求强制重置为路由3模式
 		if(isset($queryArr[0]) && ($queryArr[0] == 'api' || $queryArr[0] == 'async'))
 		{
 			self::$pattern = 3;
-			self::$entryType = $queryArr[0];
 		}
 		
 		// 把不合法的get参数清空
@@ -274,7 +268,7 @@ class Router
 			default: ;
 		}
 		self::setDefaultEMCA();
-		// 设置当前请求的唯一标识
+		// 设置当前请求的唯一缓存标识
 		self::$cacheKey = http_build_query($_GET);
 	}
 	
