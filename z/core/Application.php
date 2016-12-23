@@ -62,13 +62,6 @@ class Application
 		}
 		// 加载类名映射
 		z::$classMap = require(Z_PATH . Z_DS . 'ClassMaps.php');
-		// 加载缓存状态映射
-		$cacheMaps = unserialize(NO_CACHE_ENTRY);
-		// 若存在映射则设置为不使用缓存
-		if(isset($cacheMaps[self::$e]))
-		{
-			self::$noCache = 1;
-		}
 	}
 	
 	// 保存EMCA到类属性中

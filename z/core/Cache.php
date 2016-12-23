@@ -2,9 +2,6 @@
 
 namespace z\core;
 
-/**
- * 缓存类
- */
 class Cache
 {
 	// 缓存路径

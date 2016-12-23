@@ -56,13 +56,13 @@ class Session
 	// 设置并返回安全令牌
 	public static function getToken()
 	{
-		$token = self::get('formToken');
+		$token = self::get('__token__');
 		if($token)
 		{
 			return $token;
 		}
 		$token = md5(session_name() . time());
-		self::set('formToken', $token);
+		self::set('__token__', $token);
 		return $token;
 	}
 	

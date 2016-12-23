@@ -20,9 +20,16 @@ class index extends \admin\adminContraller
 			'c' => 'index',
 			'a' => 'enter'
 		);
-		return self::render('login', array(
+		$model = array();
+		if(isset($_POST['form']))
+		{
+			
+			//$model = 
+		}
+		$model = array_merge($model, array(
 			'enterUrl'	=> router::create($enterData),
 			'token'		=> session::getToken()
 		));
+		return self::render('login', $model);
 	}
 }

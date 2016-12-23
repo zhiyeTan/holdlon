@@ -2,9 +2,6 @@
 
 namespace z\core;
 
-/**
- * 请求类
- */
 class Request
 {
 	/**
