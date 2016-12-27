@@ -15,8 +15,6 @@ class index extends \admin\adminContraller
 	
 	public function login()
 	{
-		phpinfo();
-		exit;
 		$enterData = array(
 			'e' => 'admin',
 			'm' => 'index',
@@ -30,22 +28,23 @@ class index extends \admin\adminContraller
 			// 验证令牌
 			if(validate::is('token'))
 			{
-				// 这里处理表单
-				
+				// 这里继续验证表单元素的合法性
+				echo 1;
 			}
 			else
 			{
 				// 这里是重复提交了
+				$model['form'] = $_POST['form'];
+				// 提示
+				$model['message'] = '请勿重复提交!';
 			}
 		}
 		else
 		{
 			// 加载表单初始化数据
+			$model['token'] = session::getToken();
 		}
-		$model = array_merge($model, array(
-			'enterUrl'	=> router::create($enterData),
-			'token'		=> session::getToken()
-		));
+		
 		return self::render('login', $model);
 	}
 }

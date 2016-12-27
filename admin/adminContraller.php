@@ -24,4 +24,8 @@ class adminContraller extends \z\core\Contraller
 			header('Location: ' . $url . PHP_EOL);
 		}
 	}
+	protected static function getForm()
+	{
+		
+	}
 }

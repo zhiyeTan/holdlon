@@ -17,7 +17,7 @@ class Session
 		ini_set('session.cookie_domain', Request::cosDomain());
 		ini_set('session.cookie_lifetime', SESSION_EXPIRE);
 		// 开启session
-		session_start();
+		@session_start();
 	}
 	
 	// 单例方法，初始化对象
