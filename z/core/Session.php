@@ -10,14 +10,13 @@ class Session
 	// 构造函数声明为private,防止直接创建对象
 	private function __construct()
 	{
-		// 如果在php.ini中设置了自动开启session，则临时关闭它
+		// 配置session
 		ini_set('session.auto_start', 0);
-		// 设置session的路径、作用域及有效时间
-		ini_set('session.cookie_path', '/');
-		ini_set('session.cookie_domain', Request::cosDomain());
-		ini_set('session.cookie_lifetime', SESSION_EXPIRE);
+		ini_set('session.cache_expire', SESSION_EXPIRE);
+		ini_set('session.use_trans_sid', 0);
+		ini_set('session.use_cookies', 1);
 		// 开启session
-		@session_start();
+		session_start();
 	}
 	
 	// 单例方法，初始化对象

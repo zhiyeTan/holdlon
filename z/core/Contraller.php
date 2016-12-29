@@ -6,9 +6,10 @@ use z;
 
 class Contraller
 {
+	protected static $db;
 	public function __construct()
 	{
-		Medoo::init(z::$dbconfig);
+		self::$db = Medoo::init(z::$dbconfig);
 	}
 	
 	

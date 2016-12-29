@@ -2,7 +2,7 @@
 
 namespace z\basic;
 
-use \z\core\Model as Model;
+use \z\core\Medoo as Model;
 
 class admin
 {
@@ -15,25 +15,18 @@ class admin
 		}
 	}
 	
-	// C U R D
-	public static function C()
+	public static function hasAccount($account)
 	{
 		self::checkDB();
+		return self::$db->count(array('account' => $account));
 	}
 	
-	public static function U()
+	public static function chkPassword($account, $password)
 	{
+		$password = md5($password);
 		self::checkDB();
-	}
-	
-	public static function R()
-	{
-		self::checkDB();
-		return self::$db->get(array('account', 'name', 'tel'));
-	}
-	
-	public static function D()
-	{
-		self::checkDB();
+		echo self::$db->count(array('account' => $account, 'password' => $password));
+		exit;
+		return self::$db->count(array('account' => $account, 'password' => $password));
 	}
 }

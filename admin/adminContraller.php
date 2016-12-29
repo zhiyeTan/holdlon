@@ -12,7 +12,7 @@ class adminContraller extends \z\core\Contraller
 		// 登录状态
 		$status = Session::get('loginStatus');
 		// 若不是登录状态或cookie未保存有session_name
-		if(!!$status || !isset($_COOKIE[session_name()]))
+		if(!$status || !isset($_COOKIE[session_name()]))
 		{
 			$urldata = array(
 				'e' => $_GET['e'],
@@ -24,8 +24,8 @@ class adminContraller extends \z\core\Contraller
 			header('Location: ' . $url . PHP_EOL);
 		}
 	}
-	protected static function getForm()
+	protected static function gets($key)
 	{
-		
+		return isset($_POST['form'][$key]) ? $_POST['form'][$key] : !1;
 	}
 }
