@@ -9,7 +9,7 @@ class Loader
 	// 数据库配置
 	public static $dbconfig = array();
 	// 数据库配置的键名
-	public static $dbcfgkey = array('database_type', 'database_name', 'server', 'username', 'password', 'charset', 'port', 'prefix', 'option');
+	public static $dbcfgkey = array('server', 'username', 'password', 'dbname', 'charset', 'port', 'prefix');
 	
 	// 基本设置
 	public static function setup()

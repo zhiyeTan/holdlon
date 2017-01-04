@@ -59,11 +59,10 @@ return array(
 								),
 	
 	// 必要的数据库配置
-	'database_type'		=> 'mysql',
-	'database_name'		=> 'holon',
 	'server'			=> 'localhost',
 	'username'			=> 'root',
 	'password'			=> 'root',
+	'dbname'			=> 'holon',
 	'charset'			=> 'utf8',
 	
 	// 可选：端口
@@ -71,9 +70,6 @@ return array(
 	
 	// 可选：表前缀
 	'prefix'			=> 'z_',
-	
-	// 可选：pdo驱动选项 http://www.php.net/manual/en/pdo.setattribute.php
-	'option'			=> array(PDO::ATTR_CASE => PDO::CASE_NATURAL),
 	
 	// 设置session有效时间(单位s)
 	'session_expire'	=> 10800,
