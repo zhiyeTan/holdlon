@@ -30,27 +30,7 @@ class Application
 	
 	// 构造函数声明为private,防止直接创建对象
 	public function __construct()
-	{		
-		//Model::init(z::$dbconfig)->table('admin')->field(array('account', 'password', 'id'))->select();
-		//Model::init(z::$dbconfig)->table('admin')->field('account')->select();
-		//*
-		Model::init(z::$dbconfig)
-		->table('admin')
-		//->field(array('account'=>'', 'password'=>'', 'id'=>'max'))
-		->field(array('account', 'password', 'id'))
-		->where(array(array('id', '>', 0, 'and'), array('cid', '<', 3, '||'), array('password', 'like', '%2123%', 'and')))
-		->data(array(array(0,'sdfsfd',0), array(1,1,1)))
-		//->data(array(1,1,1))
-		//->group(array('ac','bc'))
-		//->order(array('id'=>'desc', 'p'=>'asc'))
-		//->limit(0,3)
-		->insert();
-		//*/
-		
-		
-		exit;
-		
-		
+	{
 		// 初始化路由器并解析当前请求
 		Router::init()->parse();
 		// 获得当前emca属性

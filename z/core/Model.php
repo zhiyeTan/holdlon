@@ -5,59 +5,22 @@ use mysqli;
 
 class Model
 {
-	/*
-	选择：select * from table1 where 范围 order by field1 desc/asc limit begin, length
-	
-	插入：insert into table1(field1,field2) values(value1,value2)
-	多条：insert into table1(field1,field2) values(value1,value2), (value3,value4)...
-	
-	删除：delete from table1 where 范围
-	更新：update table1 set field1=value1 where 范围
-	查找：select * from table1 where field1 like ’%value1%’ ---like的语法很精妙，查资料!
-	排序：select * from table1 order by field1,field2 [desc]
-	总数：select count as totalcount from table1
-	求和：select sum(field1) as sumvalue from table1
-	平均：select avg(field1) as avgvalue from table1
-	最大：select max(field1) as maxvalue from table1
-	最小：select min(field1) as minvalue from table1
-	去重：select distinct field1 from table1 where 范围
-	
-	
-	切换：use dbname
-	
-	
-	内联：select a.a, b.c from a inner join b on a.a = b.c
-	等同：select a.a, b.c from a,b where a.a=b.c
-	
-	左联：select a.a, b.c from a left join b on a.a = b.c
-	右联：select a.a, b.c from a right join b on a.a = b.c
-	
-	
-	
-	内联：两表都相互匹配的数据
-	左联：所有匹配条件的左表数据，右表不存在则为null
-	右联：所有匹配条件的右表数据，左表不存在则为null
-	
-	WHERE逻辑：>,=,<,<>,!=,!>,!<,=>,=<,in,not in,like,between a and b
-	ORDER BY逻辑：desc,asc
-	LIMIT逻辑：begin, length
-	
-	//*/
-	
-	// 语句嵌套
-	
 	private static $conn;
+	private static $debug = array();
 	private static $table = array();
+	private static $from  = array();
+	private static $join  = array();
 	private static $field = array();
 	private static $where = array();
 	private static $order = array();
 	private static $group = array();
-	private static $data = array();
-	private static $prefix = '';
+	private static $data  = array();
+	private static $prefix= '';
 	private static $limit = '';
 	
 	// 保存例实例在此属性中
 	private static $_instance;
+	
 	// 构造函数声明为private,防止直接创建对象
 	private function __construct($options)
 	{
@@ -76,7 +39,13 @@ class Model
 			}
 		}
 		self::$conn = new mysqli($options['server'], $options['username'], $options['password'], $options['dbname'], $options['port']);
+		if(self::$conn->connect_error)
+		{
+			die("连接失败: " . $conn->connect_error);
+		}
+		self::$conn->set_charset($options['charset']);
 	}
+	
 	// 单例方法，初始化对象
 	public static function init($options = null)
 	{
@@ -118,6 +87,18 @@ class Model
 	}
 	
 	/**
+	 * 设置联表查询中from后紧接的表名
+	 * @param: string $table 表名
+	 * @param: string $alias 别名
+	 * @return: 当前对象
+	 */
+	public static function from($table, $alias = '')
+	{
+		self::$from = array($table, $alias);
+		return self::$_instance;
+	}
+	
+	/**
 	 * 设置字段名
 	 * @param: mixed $mixed 字段名或字段名数组[字段名=>action(count、sum、avg、max、min等)]
 	 * @return: 当前对象
@@ -132,20 +113,55 @@ class Model
 			{
 				foreach($mixed as $k => $v)
 				{
-					self::$field[$k] = $v;
+					self::$field[] = array($k, $v, '');
 				}
 			}
 			else
 			{
 				foreach($mixed as $v)
 				{
-					self::$field[$v] = '';
+					if(is_array($v))
+					{
+						$v[1] = isset($v[1]) ? $v[1] : '';
+						$v[2] = isset($v[2]) ? $v[2] : '';
+						self::$field[] = array($v[0], $v[1], $v[2]);
+					}
+					else
+					{
+						self::$field[] = array($v, '', '');
+					}
 				}
 			}
 		}
 		else
 		{
-			self::$field[$mixed] = '';
+			self::$field[] = array($mixed, '', '');
+		}
+		return self::$_instance;
+	}
+	
+	/**
+	 * 设置联表
+	 * @param: array $array
+	 * @return: 当前对象
+	 */
+	public static function join($array)
+	{
+		$joinRule = array('inner', 'left', 'right', 'INNER', 'LEFT', 'RIGHT');
+		if(is_array($array))
+		{
+			foreach($array as $v)
+			{
+				// 0联表方式、1表名、2别名、3条件[字段, 字段]
+				if(is_array($v) && in_array($v[0], $joinRule) && !empty($v[1]) && !empty($v[3]))
+				{
+					if(!is_array(reset($v[3])))
+					{
+						$v[3] = array($v[3]);
+					}
+					self::$join[] = $v;
+				}
+			}
 		}
 		return self::$_instance;
 	}
@@ -160,22 +176,18 @@ class Model
 		$actionRule = array('>', '=', '<', '<>', '!=', '!>', '!<', '=>', '=<', '>=', '<=', 'in', 'not in', 'like', 'IN', 'NOT IN', 'LIKE');
 		foreach($array as $v)
 		{
-			// 二维数组且长度大于2，即字段名、操作符、值是必须的
-			if(is_array($v) && count($v) > 2)
+			// 二维数组且长度大于2，即字段名、操作符、值是必须的，以及操作符的合法性
+			if(is_array($v) && count($v) > 2 && in_array($v[1], $actionRule))
 			{
-				// 判断是否合法的操作符
-				if(in_array($v[1], $actionRule))
-				{
-					// 修正操作符为大写标准
-					$v[1] = strtoupper($v[1]);
-					// 修正模糊查询的值
-					$v[2] = $v[1] === 'LIKE' ? "'" . $v[2] . "'" : $v[2];
-					// 修正逻辑部分
-					$v[3] = isset($v[3]) ? strtoupper($v[3]) : '';
-					$v[3] = strtr($v[3], array('||'=>'OR','&&'=>'AND'));
-					// 添加到数组
-					self::$where[] = $v;
-				}
+				// 修正操作符为大写标准
+				$v[1] = strtoupper($v[1]);
+				// 修正模糊查询的值
+				$v[2] = $v[1] === 'LIKE' ? "'" . $v[2] . "'" : $v[2];
+				// 修正逻辑部分
+				$v[3] = isset($v[3]) ? strtoupper($v[3]) : '';
+				$v[3] = strtr($v[3], array('||'=>'OR','&&'=>'AND'));
+				// 添加到数组
+				self::$where[] = $v;
 			}
 		}
 		return self::$_instance;
@@ -190,11 +202,14 @@ class Model
 	{
 		if(is_array($mixed))
 		{
-			self::$group = $mixed;
+			foreach($mixed as $v)
+			{
+				self::$group[] = '`' . $v . '`';
+			}
 		}
 		else
 		{
-			self::$group = array($mixed);
+			self::$group = array('`' . $mixed . '`');
 		}
 		return self::$_instance;
 	}
@@ -217,7 +232,7 @@ class Model
 				{
 					if(in_array($v, $rule))
 					{
-						self::$order[] = $k . ' ' . strtoupper($v);
+						self::$order[] = '`' . $k . '` ' . strtoupper($v);
 					}
 				}
 			}
@@ -225,13 +240,13 @@ class Model
 			{
 				foreach($mixed as $v)
 				{
-					self::$order[] = $v . ' DESC';
+					self::$order[] = '`' . $v . '` DESC';
 				}
 			}
 		}
 		else
 		{
-			self::$order[] = $mixed . ' DESC';
+			self::$order[] = '`' . $mixed . '` DESC';
 		}
 		return self::$_instance;
 	}
@@ -292,12 +307,13 @@ class Model
 	private static function fieldToStr()
 	{
 		$str = '';
-		foreach(self::$field as $k => $v)
+		foreach(self::$field as $v)
 		{
-			$str .= ($v ? strtoupper($v) . '(`' . $k . '`)' : '`' . $k . '`') . ',';
+			// 0字段名、1操作名、2别名
+			$str .= empty($v[1]) ? '`' . $v[0] . '`' : strtoupper($v[1]) . '(`' . $v[0] . '`)';
+			$str .= empty($v[2]) ? ',' : ' AS ' . $v[2] . ',';
 		}
-		$str = rtrim($str, ',');
-		return $str;
+		return rtrim($str, ',');
 	}
 	
 	// 拼接表名
@@ -308,7 +324,29 @@ class Model
 		{
 			$str .= '`' . self::$prefix . $v . '`,';
 		}
-		$str = rtrim($str, ',');
+		return rtrim($str, ',');
+	}
+	
+	// 拼接联表查询的一个表名
+	private static function fromToStr()
+	{
+		return '`' . self::$prefix . self::$from[0] . '`' . (empty(self::$from[1]) ? '' : ' AS ' . self::$from[1]) . ' ';
+	}
+	
+	// 拼接联表及条件
+	private static function joinToStr()
+	{
+		$str = '';
+		foreach(self::$join as $v)
+		{
+			// 0联表方式、1表名、2别名、3条件[字段, 字段]
+			$str .= strtoupper($v[0]) . ' JOIN ' . $v[1] . (empty($v[2]) ? '' : ' AS ' . $v[2]) . ' ON ';
+			foreach($v[3] as $vv)
+			{
+				$str .= $vv[0] . '=' . $vv[1] . ' AND ';
+			}
+			$str = rtrim(rtrim($str), 'AND') . ' ';
+		}
 		return $str;
 	}
 	
@@ -321,12 +359,10 @@ class Model
 			$str .= ' WHERE ';
 			foreach(self::$where as $v)
 			{
-				$str .= $v[0] . ' ' . $v[1] . ' ' . $v[2] . ' ' . $v[3] . ' ';
+				$str .= '`' . $v[0] . '` ' . $v[1] . ' ' . $v[2] . ' ' . $v[3] . ' ';
 			}
 			// 去掉可能存在的多余的与或逻辑
-			$str = rtrim($str);
-			$str = rtrim($str, 'AND');
-			$str = rtrim($str, 'OR');
+			$str = rtrim(rtrim(rtrim($str), 'AND'), 'OR');
 		}
 		return $str;
 	}
@@ -339,15 +375,25 @@ class Model
 		{
 			$str .= '(' . implode(',', $v) . '),';
 		}
-		$str = rtrim($str, ',');
-		return $str;
+		return rtrim($str, ',');
 	}
 	
 	// 拼接需要更新的数据
 	private static function updateDateToStr()
 	{
 		$str = '';
-		
+		$fields = array_keys(self::$field);
+		foreach($fields as $k => $v)
+		{
+			// 处理数据
+			$data = !empty(self::$data[$k]) ? self::$data[$k] : '\'\'';
+			if(preg_match('/[\+\-\*\/\!\%]/', $data))
+			{
+				$data = $v . $data;
+			}
+			$str .= '`' . $v . '`=' . $data . ',';
+		}
+		return rtrim($str, ',');
 	}
 	
 	// 拼接分组、排序、限制
@@ -377,8 +423,15 @@ class Model
 	 */
 	public static function select()
 	{
-		$sql = 'SELECT ' . self::fieldToStr() . ' FROM ' . self::tableToStr() . self::whereToStr() . self::elseToStr();
-		self::query($sql);
+		if(!empty(self::$from) && !empty(self::$join))
+		{
+			$sql = 'SELECT ' . self::fieldToStr() . ' FROM ' . self::fromToStr() . self::joinToStr() . self::whereToStr() . self::elseToStr();
+		}
+		else
+		{
+			$sql = 'SELECT ' . self::fieldToStr() . ' FROM ' . self::tableToStr() . self::whereToStr() . self::elseToStr();
+		}
+		return self::query($sql);
 	}
 	
 	/**
@@ -387,7 +440,7 @@ class Model
 	public static function insert()
 	{
 		$sql = 'INSERT INTO ' . self::tableToStr() . '(' . self::fieldToStr() . ') VALUES ' . self::insertDataToStr();
-		self::query($sql);
+		return self::query($sql);
 	}
 	
 	/**
@@ -395,7 +448,8 @@ class Model
 	 */
 	public static function update()
 	{
-		
+		$sql = 'UPDATE ' . self::tableToStr() . ' SET ' . self::updateDateToStr() . self::whereToStr();
+		return self::query($sql);
 	}
 	
 	/**
@@ -404,21 +458,113 @@ class Model
 	public static function delete()
 	{
 		$sql = 'DELETE FROM ' . self::tableToStr() . self::whereToStr();
-		self::query($sql);
+		return self::query($sql);
 	}
 	
 	// 执行语句查询
-	public static function query($sql)
+	private static function query($sql)
 	{
-		die($sql);
-		self::$conn->query($sql);
+		if(Z_DEBUG)
+		{
+			self::$debug[] = $sql;
+		}
+		self::clean();
+		return self::$conn->query($sql);
 	}
 	
 	/**
-	 * 清除上一个查询 (包括字段、条件、分组、排序、限制)
+	 * 取得一个数据
+	 * @param: string $sql 可选，执行指定查询语句
+	 * @return: string
 	 */
-	public static function clean()
+	public static function getOne($sql = null)
 	{
+		$result = $sql ? self::query($sql) : self::select();
+		if($result !== false)
+		{
+			$row = self::$conn->fetch_row($result);
+			return $row !== false ? $row[0] : '';
+		}
+		return false;
+	}
+	
+	/**
+	 * 取得一列数据
+	 * @param: string $sql 可选，执行指定查询语句
+	 * @return: string
+	 */
+	public static function getCol($sql = null)
+	{
+		$result = $sql ? self::query($sql) : self::select();
+		if($result !== false)
+		{
+			$array = array();
+			while($row = self::$conn->fetch_row($result))
+			{
+				$array[] = $row[0];
+			}
+			return $array;
+		}
+		return false;
+	}
+	
+	/**
+	 * 取得一行数据
+	 * @param: string $sql 可选，执行指定查询语句
+	 * @return: string
+	 */
+	public static function getRow($sql = null)
+	{
+		$result = $sql ? self::query($sql) : self::select();
+		if($result !== false)
+		{
+			return self::$conn->fetch_assoc($result);
+		}
+		return false;
+	}
+	
+	/**
+	 * 取得全部数据
+	 * @param: string $sql 可选，执行指定查询语句
+	 * @return: string
+	 */
+	public static function getAll($sql = null)
+	{
+		$result = $sql ? self::query($sql) : self::select();
+		if($result !== false)
+		{
+			$array = array();
+			while($row = self::$conn->fetch_assoc($result))
+			{
+				$array[] = $row;
+			}
+			return $array;
+		}
+		return false;
+	}
+	
+	/**
+	 * 取得上一个INSERT操作产生的ID
+	 * @return: number
+	 */
+	public static function getInsertId()
+	{
+		return self::$conn->insert_id();
+	}
+	
+	// 调试查询语句
+	public static function debug()
+	{
+		echo '<pre>';
+		print_r(self::$debug);
+		exit(0);
+	}
+	
+	// 清空查询记录 (包括联表、字段、条件、分组、排序、数据、限制)
+	private static function clean()
+	{
+		self::$from  = array();
+		self::$join  = array();
 		self::$field = array();
 		self::$where = array();
 		self::$group = array();
