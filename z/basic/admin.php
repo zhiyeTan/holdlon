@@ -2,7 +2,7 @@
 
 namespace z\basic;
 
-use \z\core\Medoo as Model;
+use \z\core\Model as Model;
 
 class admin
 {
@@ -11,22 +11,19 @@ class admin
 	{
 		if(!isset(self::$db))
 		{
-			self::$db = Model::setTable('admin');
+			self::$db = Model::table('admin');
 		}
 	}
 	
 	public static function hasAccount($account)
 	{
 		self::checkDB();
-		return self::$db->count(array('account' => $account));
+		return self::$db->where(array('account', '=', $account))->has();
 	}
 	
 	public static function chkPassword($account, $password)
 	{
-		$password = md5($password);
 		self::checkDB();
-		echo self::$db->count(array('account' => $account, 'password' => $password));
-		exit;
-		return self::$db->count(array('account' => $account, 'password' => $password));
+		return self::$db->where(array(array('account', '=', $account), array('password', '=', md5($password))))->has();
 	}
 }

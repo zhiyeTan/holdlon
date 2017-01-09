@@ -100,11 +100,13 @@ class Model
 	
 	/**
 	 * 设置字段名
-	 * @param: mixed $mixed 字段名或字段名数组[字段名=>action(count、sum、avg、max、min等)]
+	 * @param: mixed $mixed 字段名或数组
 	 * @return: 当前对象
 	 */
 	public static function field($mixed)
 	{
+		// TODO 增加 字段名=>别名 形式的数组处理
+		$arr = array();
 		if(is_array($mixed))
 		{
 			// 判断是否索引数组
@@ -113,30 +115,33 @@ class Model
 			{
 				foreach($mixed as $k => $v)
 				{
-					self::$field[] = array($k, $v, '');
+					$arr[] = array($k, $v, '');
 				}
 			}
 			else
 			{
-				foreach($mixed as $v)
+				if(is_array(reset($mixed)))
 				{
-					if(is_array($v))
+					foreach($mixed as $v)
 					{
 						$v[1] = isset($v[1]) ? $v[1] : '';
 						$v[2] = isset($v[2]) ? $v[2] : '';
-						self::$field[] = array($v[0], $v[1], $v[2]);
+						$arr[] = array($v[0], $v[1], $v[2]);
 					}
-					else
-					{
-						self::$field[] = array($v, '', '');
-					}
+				}
+				else
+				{
+					$key = array_keys($mixed);
+					$val = array_values($mixed);
+					$arr[] = array(reset($key), reset($val), '');
 				}
 			}
 		}
 		else
 		{
-			self::$field[] = array($mixed, '', '');
+			$arr[] = array($mixed, '', '');
 		}
+		self::$field[] = $arr;
 		return self::$_instance;
 	}
 	
@@ -173,25 +178,39 @@ class Model
 	 */
 	public static function where($array)
 	{
-		$actionRule = array('>', '=', '<', '<>', '!=', '!>', '!<', '=>', '=<', '>=', '<=', 'in', 'not in', 'like', 'IN', 'NOT IN', 'LIKE');
-		foreach($array as $v)
+		// 判断二位数组
+		if(is_array(reset($array)))
 		{
-			// 二维数组且长度大于2，即字段名、操作符、值是必须的，以及操作符的合法性
-			if(is_array($v) && count($v) > 2 && in_array($v[1], $actionRule))
-			{
-				// 修正操作符为大写标准
-				$v[1] = strtoupper($v[1]);
-				// 修正模糊查询的值
-				$v[2] = $v[1] === 'LIKE' ? "'" . $v[2] . "'" : $v[2];
-				// 修正逻辑部分
-				$v[3] = isset($v[3]) ? strtoupper($v[3]) : '';
-				$v[3] = strtr($v[3], array('||'=>'OR','&&'=>'AND'));
-				// 添加到数组
-				self::$where[] = $v;
-			}
+			array_map('self::fixWhere', $array);
+		}
+		else
+		{
+			self::fixWhere($array);
 		}
 		return self::$_instance;
 	}
+	
+	// 修正条件
+	private static function fixWhere($arr)
+	{
+		$actionRule = array('>', '=', '<', '<>', '!=', '!>', '!<', '=>', '=<', '>=', '<=', 'in', 'not in', 'like', 'regexp', 'IN', 'NOT IN', 'LIKE', 'REGEXP');
+		// 二维数组且长度大于2，即字段名、操作符、值是必须的，以及操作符的合法性
+		if(is_array($arr) && count($arr) > 2 && in_array($arr[1], $actionRule))
+		{
+			// 修正操作符为大写标准
+			$arr[1] = strtoupper($arr[1]);
+			// 修正字符串类型的值
+			$arr[2] = is_string($arr[2]) ? "'" . $arr[2] . "'" : $arr[2];
+			// 修正逻辑部分
+			$arr[3] = isset($arr[3]) ? strtoupper($arr[3]) : '';
+			$arr[3] = strtr($arr[3], array('||'=>'OR','&&'=>'AND'));
+			$arr[3] = empty($arr[3]) ? 'AND' : $arr[3];
+			// 添加到数组
+			self::$where[] = $arr;
+		}
+	}
+	
+	// TODO having 语句
 	
 	/**
 	 * 设置分组
@@ -310,7 +329,8 @@ class Model
 		foreach(self::$field as $v)
 		{
 			// 0字段名、1操作名、2别名
-			$str .= empty($v[1]) ? '`' . $v[0] . '`' : strtoupper($v[1]) . '(`' . $v[0] . '`)';
+			$v[0] = $v[0] === '*' ? $v[0] : '`' . $v[0] . '`';
+			$str .= empty($v[1]) ? $v[0] : strtoupper($v[1]) . '(' . $v[0] . ')';
 			$str .= empty($v[2]) ? ',' : ' AS ' . $v[2] . ',';
 		}
 		return rtrim($str, ',');
@@ -475,14 +495,14 @@ class Model
 	/**
 	 * 取得一个数据
 	 * @param: string $sql 可选，执行指定查询语句
-	 * @return: string
+	 * @return: string或false
 	 */
 	public static function getOne($sql = null)
 	{
 		$result = $sql ? self::query($sql) : self::select();
 		if($result !== false)
 		{
-			$row = self::$conn->fetch_row($result);
+			$row = $result->fetch_row();
 			return $row !== false ? $row[0] : '';
 		}
 		return false;
@@ -491,7 +511,7 @@ class Model
 	/**
 	 * 取得一列数据
 	 * @param: string $sql 可选，执行指定查询语句
-	 * @return: string
+	 * @return: 一维数组或false
 	 */
 	public static function getCol($sql = null)
 	{
@@ -499,7 +519,7 @@ class Model
 		if($result !== false)
 		{
 			$array = array();
-			while($row = self::$conn->fetch_row($result))
+			while($row = $result->fetch_row())
 			{
 				$array[] = $row[0];
 			}
@@ -511,14 +531,14 @@ class Model
 	/**
 	 * 取得一行数据
 	 * @param: string $sql 可选，执行指定查询语句
-	 * @return: string
+	 * @return: 一维数组或false
 	 */
 	public static function getRow($sql = null)
 	{
 		$result = $sql ? self::query($sql) : self::select();
 		if($result !== false)
 		{
-			return self::$conn->fetch_assoc($result);
+			return $result->fetch_assoc();
 		}
 		return false;
 	}
@@ -526,7 +546,7 @@ class Model
 	/**
 	 * 取得全部数据
 	 * @param: string $sql 可选，执行指定查询语句
-	 * @return: string
+	 * @return: 二维数组或false
 	 */
 	public static function getAll($sql = null)
 	{
@@ -534,13 +554,72 @@ class Model
 		if($result !== false)
 		{
 			$array = array();
-			while($row = self::$conn->fetch_assoc($result))
+			while($row = $result->fetch_assoc())
 			{
 				$array[] = $row;
 			}
 			return $array;
 		}
 		return false;
+	}
+	
+	/**
+	 * 取得数量
+	 * @return: number
+	 */
+	public static function count()
+	{
+		$sql = 'SELECT COUNT(*) FROM ' . self::tableToStr() . self::whereToStr() . self::elseToStr();
+		return self::getOne($sql);
+	}
+	
+	/**
+	 * 判断是否存在
+	 * @return: bool
+	 */
+	public static function has()
+	{
+		return !!self::count();
+	}
+	
+	/**
+	 * 取得最大值
+	 * @return: number
+	 */
+	public static function max($field)
+	{
+		$sql = 'SELECT MAX(' . $field . ') FROM ' . self::tableToStr() . self::whereToStr() . self::elseToStr();
+		return self::getOne($sql);
+	}
+	
+	/**
+	 * 取得最小值
+	 * @return: number
+	 */
+	public static function min($field)
+	{
+		$sql = 'SELECT MIN(' . $field . ') FROM ' . self::tableToStr() . self::whereToStr() . self::elseToStr();
+		return self::getOne($sql);
+	}
+	
+	/**
+	 * 取得平均数
+	 * @return: number
+	 */
+	public static function avg($field)
+	{
+		$sql = 'SELECT AVG(' . $field . ') FROM ' . self::tableToStr() . self::whereToStr() . self::elseToStr();
+		return self::getOne($sql);
+	}
+	
+	/**
+	 * 取得总和
+	 * @return: number
+	 */
+	public static function sum($field)
+	{
+		$sql = 'SELECT SUM(' . $field . ') FROM ' . self::tableToStr() . self::whereToStr() . self::elseToStr();
+		return self::getOne($sql);
 	}
 	
 	/**

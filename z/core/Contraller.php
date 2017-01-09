@@ -9,7 +9,7 @@ class Contraller
 	protected static $db;
 	public function __construct()
 	{
-		self::$db = Medoo::init(z::$dbconfig);
+		self::$db = Model::init(z::$dbconfig);
 	}
 	
 	

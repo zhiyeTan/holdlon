@@ -17,9 +17,9 @@ class index extends \admin\adminContraller
 	
 	public function login()
 	{
-		//echo \z\core\Medoo::setTable('admin')->count(array('account' => 'admin', 'password' => md5('admin')));
-		echo \z\core\Medoo::setTable('admin')->get('id', array('account' => 'admin', 'password' => md5('admin')));
+		echo admin::chkPassword('admin', 'admin');
 		exit;
+		
 		$idxUrlDate = array(
 			'e' => 'admin',
 			'm' => 'index',

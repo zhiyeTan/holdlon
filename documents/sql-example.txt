@@ -1,0 +1,115 @@
+
+/* =========================================================== */
+table的几种设置方法：
+
+V5.0+：
+->table('admin')
+->table(array('admin', 'user'))
+
+V5.4+：
+->table(['admin', 'user'])
+
+
+
+/* =========================================================== */
+field的几种设置方法：
+
+V5.0+：
+->field('id')
+->field(array('account', 'password'))
+->field(array('account'=>'count'))
+->field(array('*'=>'count', 'id'=>'count'))
+->field(array(array('account','count','a')))
+->field(array(array('account','','a'), array('*','count','b')))
+
+V5.4+：
+->field(['account', 'password'])
+->field(['account'=>'count'])
+->field(['*'=>'count', 'id'=>'count'])
+->field([['account','count','a']]]
+->field([['account','','a'], ['*','count','b']])
+
+
+
+/* =========================================================== */
+from的几种设置方法：
+
+V5.0+：
+->from('admin')
+->from('admin', 'a')
+
+
+
+/* =========================================================== */
+join的几种设置方法：
+
+V5.0+：
+->join(array('inner', 'user', 'u', array('u.uid', 'a.uid')))
+->join(array('left', 'user', 'u', array(array('u.uid', 'a.uid'), array('u.uid', 'b.uid'))))
+
+V5.4+：
+->join(['inner', 'user', 'u', ['u.uid', 'a.uid']])
+->join(['left', 'user', 'u', [['u.uid', 'a.uid'], ['u.uid', 'b.uid']]])
+
+
+
+/* =========================================================== */
+where的几种设置方法：
+
+V5.0+：
+->where(array('uid', '=', 1))
+->where(array(array('uid', '=', 1), array('id', '>=', 12)))
+->where(array(array('uid', '=', 1, '&&'), array('id', '>=', 12)))
+
+V5.4+：
+->where(['uid', '=', 1])
+->where([['uid', '=', 1], ['id', '>=', 12]])
+->where([['uid', '=', 1, '&&'], ['id', '>=', 12]])
+
+
+
+/* =========================================================== */
+group的几种设置方法：
+
+V5.0+：
+->group('age')
+->group(array('age', 'familyName'))
+
+V5.4+：
+->group(['age', 'familyName'])
+
+
+
+/* =========================================================== */
+order的几种设置方法：
+
+V5.0+：
+->order('age')
+->order(array('age', 'sort'))
+->order(array('age'=>'asc', 'sort'=>'desc'))
+
+V5.4+：
+->order(['age', 'sort'])
+->order(['age'=>'asc', 'sort'=>'desc'])
+
+
+
+/* =========================================================== */
+limit的几种设置方法：
+
+V5.0+：
+->limit(5)
+->limit(0, 5)
+
+
+
+/* =========================================================== */
+data的几种设置方法：
+
+V5.0+：
+->data(array(1, 'admin', 'passwordkey'))
+->data(array(array(1, 'admin', 'passwordkey'), array(2, 'admin2', 'passwordkey2')))
+
+V5.4+：
+->data([1, 'admin', 'passwordkey'])
+->data([[1, 'admin', 'passwordkey'], [2, 'admin2', 'passwordkey2']]]
