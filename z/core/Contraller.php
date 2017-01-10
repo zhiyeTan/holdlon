@@ -6,13 +6,6 @@ use z;
 
 class Contraller
 {
-	protected static $db;
-	public function __construct()
-	{
-		self::$db = Model::init(z::$dbconfig);
-	}
-	
-	
 	// 渲染404页面
 	public static function render404($mixed)
 	{
@@ -37,5 +30,21 @@ class Contraller
 		require $templatePath;
 		// 返回缓冲内容并清空
 		return ob_get_clean();
+	}
+	
+	// 渲染部件
+	public static function widget($name)
+	{
+		$widgetfile = APP_PATH . 'widgets' . Z_DS;
+		$fileNameM = $widgetfile . 'models' . Z_DS . $name . '.php';
+		$fileNameV = $widgetfile . 'views' . Z_DS . $name . '.php';
+		if(is_file($fileNameM))
+		{
+			$widgetData[$name] = require $fileNameM;
+		}
+		if(is_file($fileNameV))
+		{
+			require $fileNameV;
+		}
 	}
 }

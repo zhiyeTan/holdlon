@@ -13,13 +13,11 @@ class index extends \admin\adminContraller
 	public function index()
 	{
 		self::chkLogin();
+		return self::render('index');
 	}
 	
 	public function login()
 	{
-		echo admin::chkPassword('admin', 'admin');
-		exit;
-		
 		$idxUrlDate = array(
 			'e' => 'admin',
 			'm' => 'index',

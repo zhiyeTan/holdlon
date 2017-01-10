@@ -2,6 +2,7 @@
 
 namespace z\core;
 use mysqli;
+use z;
 
 class Model
 {
@@ -14,6 +15,7 @@ class Model
 	private static $where = array();
 	private static $order = array();
 	private static $group = array();
+	private static $having= array();
 	private static $data  = array();
 	private static $prefix= '';
 	private static $limit = '';
@@ -47,14 +49,23 @@ class Model
 	}
 	
 	// 单例方法，初始化对象
-	public static function init($options = null)
+	public static function init()
 	{
 		if(!isset(self::$_instance))
 		{
 			$c = __CLASS__;
-			self::$_instance = new $c($options);
+			self::$_instance = new $c(z::$dbconfig);
 		}
 		return self::$_instance;
+	}
+	
+	/**
+	 * 获得MySQL版本号
+	 */
+	public static function version()
+	{
+		$info = explode('-', @self::$conn->get_server_info());
+		return $info[0];
 	}
 	
 	/**
@@ -105,8 +116,8 @@ class Model
 	 */
 	public static function field($mixed)
 	{
-		// TODO 增加 字段名=>别名 形式的数组处理
-		$arr = array();
+		$funcRule = array('DISTINCT', 'UPPER', 'LOWER', 'DATE', 'TIME', 'YEAR', 'MONTH', 'DAY', 'HOUR', 'MINUTE', 
+		                  'SECOND', 'DAYOFWEEK', 'ABS', 'RAND', 'AVG', 'COUNT', 'MAX', 'MIN', 'SUM');
 		if(is_array($mixed))
 		{
 			// 判断是否索引数组
@@ -115,7 +126,14 @@ class Model
 			{
 				foreach($mixed as $k => $v)
 				{
-					$arr[] = array($k, $v, '');
+					if(in_array(strtoupper($v), $funcRule))
+					{
+						self::$field[] = array($k, $v, '');
+					}
+					else
+					{
+						self::$field[] = array($k, '', $v);
+					}
 				}
 			}
 			else
@@ -126,22 +144,28 @@ class Model
 					{
 						$v[1] = isset($v[1]) ? $v[1] : '';
 						$v[2] = isset($v[2]) ? $v[2] : '';
-						$arr[] = array($v[0], $v[1], $v[2]);
+						if(in_array(strtoupper($v[1]), $funcRule))
+						{
+							self::$field[] = array($v[0], $v[1], $v[2]);
+						}
+						else
+						{
+							self::$field[] = array($v[0], $v[2], $v[1]);
+						}
 					}
 				}
 				else
 				{
 					$key = array_keys($mixed);
 					$val = array_values($mixed);
-					$arr[] = array(reset($key), reset($val), '');
+					self::$field[] = array(reset($key), reset($val), '');
 				}
 			}
 		}
 		else
 		{
-			$arr[] = array($mixed, '', '');
+			self::$field[] = array($mixed, '', '');
 		}
-		self::$field[] = $arr;
 		return self::$_instance;
 	}
 	
@@ -181,17 +205,17 @@ class Model
 		// 判断二位数组
 		if(is_array(reset($array)))
 		{
-			array_map('self::fixWhere', $array);
+			self::$where = array_map('self::fixCondition', $array);
 		}
 		else
 		{
-			self::fixWhere($array);
+			self::$where = array(self::fixCondition($array));
 		}
 		return self::$_instance;
 	}
 	
 	// 修正条件
-	private static function fixWhere($arr)
+	private static function fixCondition($arr)
 	{
 		$actionRule = array('>', '=', '<', '<>', '!=', '!>', '!<', '=>', '=<', '>=', '<=', 'in', 'not in', 'like', 'regexp', 'IN', 'NOT IN', 'LIKE', 'REGEXP');
 		// 二维数组且长度大于2，即字段名、操作符、值是必须的，以及操作符的合法性
@@ -206,11 +230,10 @@ class Model
 			$arr[3] = strtr($arr[3], array('||'=>'OR','&&'=>'AND'));
 			$arr[3] = empty($arr[3]) ? 'AND' : $arr[3];
 			// 添加到数组
-			self::$where[] = $arr;
+			return $arr;
 		}
+		return false;
 	}
-	
-	// TODO having 语句
 	
 	/**
 	 * 设置分组
@@ -229,6 +252,26 @@ class Model
 		else
 		{
 			self::$group = array('`' . $mixed . '`');
+		}
+		return self::$_instance;
+	}
+	
+	/**
+	 * 设置分组条件（不支持between）
+	 * @param: array $array 由字段名、操作符、值、逻辑（可空）组成的数组
+	 *         如：[['id', '>', 3,'and']], [['id', '>', 3,'&&(']], [['id', '>', 3,')']]
+	 * @return: 当前对象
+	 */
+	public static function having($array)
+	{
+		// 判断二位数组
+		if(is_array(reset($array)))
+		{
+			self::$having = array_map('self::fixCondition', $array);
+		}
+		else
+		{
+			self::$having = array(self::fixCondition($array));
 		}
 		return self::$_instance;
 	}
@@ -379,7 +422,10 @@ class Model
 			$str .= ' WHERE ';
 			foreach(self::$where as $v)
 			{
-				$str .= '`' . $v[0] . '` ' . $v[1] . ' ' . $v[2] . ' ' . $v[3] . ' ';
+				if($v)
+				{
+					$str .= '`' . $v[0] . '` ' . $v[1] . ' ' . $v[2] . ' ' . $v[3] . ' ';
+				}
 			}
 			// 去掉可能存在的多余的与或逻辑
 			$str = rtrim(rtrim(rtrim($str), 'AND'), 'OR');
@@ -416,26 +462,70 @@ class Model
 		return rtrim($str, ',');
 	}
 	
-	// 拼接分组、排序、限制
-	private static function elseToStr()
+	// 拼接分组
+	private static function groupToStr()
 	{
-		$str = '';
-		// 拼接分组条件
+		$str ='';
 		if(!empty(self::$group))
 		{
 			$str .= ' GROUP BY ' . implode(',', self::$group);
+			if(!empty(self::$having))
+			{
+				$str .= ' HAVING ';
+				foreach(self::$having as $v)
+				{
+					if($v)
+					{
+						// having可以使用集合函数，因此需作对应处理
+						if(strpos($v[0], '(') !== false )
+						{
+							$str .= strpos($v[0], '*') ? $v[0] : strtr($v[0], array('('=>'(`',')'=>'`)'));
+						}
+						else
+						{
+							$str .= '`' . $v[0] . '`';
+						}
+						$str .= ' ' . $v[1] . ' ' . $v[2] . ' ' . $v[3] . ' ';
+					}
+				}
+				// 去掉可能存在的多余的与或逻辑
+				$str = rtrim(rtrim(rtrim($str), 'AND'), 'OR');
+			}
 		}
-		// 拼接排序条件
+		return $str;
+	}
+	
+	// 拼接排序方式
+	private static function orderToStr()
+	{
+		$str = '';
 		if(!empty(self::$order))
 		{
 			$str .= ' ORDER BY ' . implode(',', self::$order);
 		}
-		// 拼接查询限制
+		return $str;
+	}
+	
+	// 拼接查询限制
+	private static function limitToStr()
+	{
+		$str = '';
 		if(!empty(self::$limit))
 		{
 			$str .= ' LIMIT ' . self::$limit;
 		}
 		return $str;
+	}
+	
+	// 执行语句查询
+	private static function query($sql)
+	{
+		if(Z_DEBUG)
+		{
+			self::$debug[] = $sql;
+		}
+		self::clean();
+		return self::$conn->query($sql);
 	}
 	
 	/**
@@ -445,12 +535,13 @@ class Model
 	{
 		if(!empty(self::$from) && !empty(self::$join))
 		{
-			$sql = 'SELECT ' . self::fieldToStr() . ' FROM ' . self::fromToStr() . self::joinToStr() . self::whereToStr() . self::elseToStr();
+			$sql = 'SELECT ' . self::fieldToStr() . ' FROM ' . self::fromToStr() . self::joinToStr();
 		}
 		else
 		{
-			$sql = 'SELECT ' . self::fieldToStr() . ' FROM ' . self::tableToStr() . self::whereToStr() . self::elseToStr();
+			$sql = 'SELECT ' . self::fieldToStr() . ' FROM ' . self::tableToStr();
 		}
+		$sql .= self::whereToStr() . self::groupToStr() . self::orderToStr() . self::limitToStr();
 		return self::query($sql);
 	}
 	
@@ -479,17 +570,6 @@ class Model
 	{
 		$sql = 'DELETE FROM ' . self::tableToStr() . self::whereToStr();
 		return self::query($sql);
-	}
-	
-	// 执行语句查询
-	private static function query($sql)
-	{
-		if(Z_DEBUG)
-		{
-			self::$debug[] = $sql;
-		}
-		self::clean();
-		return self::$conn->query($sql);
 	}
 	
 	/**
@@ -563,14 +643,20 @@ class Model
 		return false;
 	}
 	
+	// 聚合查询
+	private static function gether($type, $field = '*')
+	{
+		$sql = 'SELECT ' . strtoupper($type) . '(' . $field . ') FROM ' . self::tableToStr() . self::whereToStr() . self::groupToStr();
+		return self::getOne($sql);
+	}
+	
 	/**
 	 * 取得数量
 	 * @return: number
 	 */
 	public static function count()
 	{
-		$sql = 'SELECT COUNT(*) FROM ' . self::tableToStr() . self::whereToStr() . self::elseToStr();
-		return self::getOne($sql);
+		return self::gether('count');
 	}
 	
 	/**
@@ -579,7 +665,7 @@ class Model
 	 */
 	public static function has()
 	{
-		return !!self::count();
+		return !!self::gether('count');
 	}
 	
 	/**
@@ -588,8 +674,7 @@ class Model
 	 */
 	public static function max($field)
 	{
-		$sql = 'SELECT MAX(' . $field . ') FROM ' . self::tableToStr() . self::whereToStr() . self::elseToStr();
-		return self::getOne($sql);
+		return self::gether('max', $field);
 	}
 	
 	/**
@@ -598,8 +683,7 @@ class Model
 	 */
 	public static function min($field)
 	{
-		$sql = 'SELECT MIN(' . $field . ') FROM ' . self::tableToStr() . self::whereToStr() . self::elseToStr();
-		return self::getOne($sql);
+		return self::gether('min', $field);
 	}
 	
 	/**
@@ -608,8 +692,7 @@ class Model
 	 */
 	public static function avg($field)
 	{
-		$sql = 'SELECT AVG(' . $field . ') FROM ' . self::tableToStr() . self::whereToStr() . self::elseToStr();
-		return self::getOne($sql);
+		return self::gether('avg', $field);
 	}
 	
 	/**
@@ -618,8 +701,7 @@ class Model
 	 */
 	public static function sum($field)
 	{
-		$sql = 'SELECT SUM(' . $field . ') FROM ' . self::tableToStr() . self::whereToStr() . self::elseToStr();
-		return self::getOne($sql);
+		return self::gether('sum', $field);
 	}
 	
 	/**
@@ -647,6 +729,7 @@ class Model
 		self::$field = array();
 		self::$where = array();
 		self::$group = array();
+		self::$having= array();
 		self::$order = array();
 		self::$data  = array();
 		self::$limit = '';

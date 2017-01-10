@@ -452,6 +452,18 @@ a{text-decoration: none;}
 	padding: 4px 8px;
 }
 
+/*index*/
+.rpm-row-box li{
+	float: left;
+	width: 25%;
+	min-width: 160px;
+	height: 26px;
+	padding-top: 4px;
+}
+.rpm-span-margin{
+	margin-left: 20px;
+	color: #999;
+}
 
 
 

@@ -1,39 +1,25 @@
-<?php
-$widget = z\core\widget::init();
-?>
-<!DOCTYPE html>
-<html>
-	<head>
-		<meta charset="UTF-8"/>
-		<title>信息管理平台</title>
-		<link rel="stylesheet" type="text/css" href="css/style.css"/>
-		<link rel="stylesheet" type="text/css" href="css/iconfont.css"/>
-		<script type="text/javascript" src="js/jquery-1.10.2.min.js" ></script>
-		<script type="text/javascript" src="js/base.js" ></script>
-	</head>
-	<body>
-		<?php $widget->output('header'); ?>
-		<?php $widget->output('sidebar'); ?>
-		<div id="rpm-content">
-			<p class="rpm-stair-page-title"><i class="dashicons dashicons-page-crumbs"></i><span>{$sidebar.page_name}</span></p>
-			<table class="rpm-list-table">
-				<tbody>
-					<tr>
-						<th>{$lang.a_title}</th>
-						<th>{$lang.a_cat_id}</th>
-						<th>{$lang.handle}</th>
-					</tr>
-					<?php print_r($data); ?>
-					<tr class="rpm-table-single-row">
-						<td>{$l.cat_name}</td>
-						<td><i class="dashicons dashicons-icon-{if $l.is_hot}yes{else}no{/if}"></i></td>
-						<td class="rpm-text-align-left">
-							<a class="rpm-handle_btn" href="#" title="删除"><i class="iconfont icon-handle-btn-del"></i></a>
-						</td>
-					</tr>
-				</tbody>
-			</table>
-		</div>
-		<?php $widget->output('total'); ?>
-	</body>
-</html>
+<?php self::widget('header'); ?>
+<?php self::widget('sidebar'); ?>
+<div id="rpm-content">
+	<div class="rpm-row">
+		<p class="rpm-row-title">系统信息</p>
+		<ul class="rpm-row-box">
+			<?php
+			$gd = gd_info();
+			$gd_ver = trim(strtr($gd['GD Version'], array('bundled ('=>'', 'compatible)'=>'')));
+			?>
+			<li><span>操作系统</span><span class="rpm-span-margin"><?php echo PHP_OS;?></span></li>
+			<li><span>WEB服务</span><span class="rpm-span-margin"><?php echo strstr($_SERVER['SERVER_SOFTWARE'], 'Apache') ? 'Apache' : 'Nginx';?></span></li>
+			<li><span>PHP版本</span><span class="rpm-span-margin"><?php echo PHP_VERSION;?></span></li>
+			<li><span>MySQL版本</span><span class="rpm-span-margin"><?php echo \z\core\Model::init()->version();?></span></li>
+			<li><span>GD库版本</span><span class="rpm-span-margin"><?php echo $gd_ver;?></span></li>
+			<li><span>JPEG支持</span><span class="rpm-span-margin"><?php echo $gd['JPEG Support'] ? '是' : '否';?></span></li>
+			<li><span>GIF支持</span><span class="rpm-span-margin"><?php echo $gd['GIF Create Support'] && $gd['GIF Read Support'] ? '是' : '否';?></span></li>
+			<li><span>PNG支持</span><span class="rpm-span-margin"><?php echo $gd['PNG Support'] ? '是' : '否';?></span></li>
+			<li><span>安全模式</span><span class="rpm-span-margin"><?php echo ini_get('safe_mode') ? '是' : '否';?></span></li>
+			<div class="clear"></div>
+		</ul>
+	</div>
+</div>
+<?php self::widget('total'); ?>
+<?php self::widget('footer'); ?>

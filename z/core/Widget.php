@@ -8,13 +8,6 @@ class Widget
 	private static $widgetM;
 	// 小部件数据目录
 	private static $widgetV;
-	// 异常类型
-	private static $exceptionType = 0;
-	// 异常提示
-	private static $exceptionMaps = array(
-		1 => '此部件的模型不存在！',
-		2 => '此部件的视图不存在'
-	);
 	// 保存例实例在此属性中
 	private static $_instance;
 	
@@ -46,39 +39,16 @@ class Widget
 	// 输出
 	public static function output($name)
 	{
-		if(self::checkWidget($name) === true)
-		{
-			$widgetData[$name] = require self::$widgetM . $name . '.php';
-			require self::$widgetV . $name . '.php';
-		}
-	}
-	
-	// 错误处理
-	public static function exception()
-	{
-		echo '<p>' . self::$exceptionMaps[self::$exceptionType] . '</p>';
-	}
-	
-	// 检查小部件对应模型/视图
-	public static function checkWidget($name)
-	{
 		$fileNameM = self::$widgetM . $name . '.php';
 		$fileNameV = self::$widgetV . $name . '.php';
-		if(!is_file($fileNameM))
+		if(is_file($fileNameM))
 		{
-			self::$exceptionType = 1;
+			$widgetData[$name] = require $fileNameM;
 		}
-		elseif(!is_file($fileNameV))
+		if(is_file($fileNameV))
 		{
-			self::$exceptionType = 2;
-		}
-		if(self::$exceptionType)
-		{
-			return self::exception();
-		}
-		else
-		{
-			return true;
+			require $fileNameV;
 		}
 	}
+	
 }

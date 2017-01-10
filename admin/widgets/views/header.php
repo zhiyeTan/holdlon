@@ -2,9 +2,11 @@
 <html>
 	<head>
 		<meta charset="UTF-8"/>
-		<title>信息管理中心</title>
+		<title>信息管理平台</title>
 		<link rel="stylesheet" type="text/css" href="css/style.css"/>
 		<link rel="stylesheet" type="text/css" href="css/iconfont.css"/>
+		<script type="text/javascript" src="js/jquery-1.10.2.min.js" ></script>
+		<script type="text/javascript" src="js/base.js" ></script>
 	</head>
 	<body>
 		<div id="rpm-header">
