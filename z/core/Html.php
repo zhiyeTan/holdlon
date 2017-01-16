@@ -69,43 +69,79 @@ class Html
 	}
 	
 	/**
-	 * 创建标签
-	 * @param: string $label 标签名
-	 * @param: array $data 属性值对数组（content为非空标签的内容）
+	 * 生成指定节点结构
+	 * 
 	 */
-	public function create($label, $data = null)
+	public function createNode($structure)
 	{
-		$str = '<' . $label;
-		if(is_array($data))
+		$sKeys = array('label', 'content', 'children');
+		$str = '';
+		if(!is_array($structure))
 		{
-			foreach($data as $k => $v)
+			return ;
+		}
+		// 判断是否索引数组
+		$keys = array_keys($structure);
+		if($keys != array_keys($keys))
+		{
+			// 修正关联数组为索引数组
+			$structure = array($structure);
+		}
+		// 遍历结构
+		// $structure = array(0 => array('label'=>'li', 'content'=>'', 'children'=>array()))
+		foreach($structure as $v)
+		{
+			if(!empty($v['label']))
 			{
-				if($k !== 'content')
+				$str .= '<' . $v['label'];
+				// 构造标签属性
+				foreach($v as $kk => $vv)
 				{
-					$str .= ' ' . $k . '="' . (is_array($v) ? implode(' ', $v) : $v) . '"';
+					if(!in_array($kk, $sKeys))
+					{
+						$str .= ' ' . $kk . '="' . (is_array($vv) ? implode(' ', $vv) : $vv) . '"';
+					}
+				}
+				// 构造完整的标签（或起始标签）
+				$str .= in_array($v['label'], $this->nullLabel) && $this->isXhtml ? '/>' : '>';
+				// 如果存在子结构，则递归得到结构
+				if(!empty($v['children']))
+				{
+					$str .= $this->createNode($v['children']);
+				}
+				// 如果是非空标签，为标签添加内容，并追加结束标签
+				if(!in_array($v['label'], $this->nullLabel))
+				{
+					if(isset($v['content']))
+					{
+						$str .= $v['content'];
+					}
+					$str .= '</' . $v['label'] . '>';
 				}
 			}
-		}
-		$str .= in_array($label, $this->nullLabel) && $this->isXhtml ? '/>' : '>';
-		if(!in_array($label, $this->nullLabel))
-		{
-			if(isset($data['content']))
-			{
-				$str .= $data['content'];
-			}
-			$str .= '</' . $label . '>';
 		}
 		return $str;
 	}
 	
-	// TODO 嵌套与循环，循环中的嵌套
 	/**
-	 * 输出结构
-	 * @param: array $nests 标签嵌套的数组（）
-	 * @param: 
+	 * 生成循环体
 	 */
-	public function output($nests, $cycle)
+	public function cycleNode($data, $structure)
 	{
-		
+		$str = '';
+		$node = $this->createNode($structure);
+		foreach($data as $v)
+		{
+			preg_match_all('/\$(.*?)\$/', $node, $res);
+			$tmp = array();
+			foreach($res[0] as $rk => $rv)
+			{
+				$tmp[$rv] = isset($v[$res[1][$rk]]) ? $v[$res[1][$rk]] : '';
+			}
+			$str .= strtr($node, $tmp);
+		}
+		return $str;
 	}
+	
+	
 }
