@@ -143,5 +143,55 @@ class Html
 		return $str;
 	}
 	
+	/**
+	 * 获得下一个循环节点
+	 */
+	public function getNextCycleNode($structure, $childName, $nodeName)
+	{
+		$stu = false;
+		if(is_array($structure))
+		{
+			foreach($structure as $v)
+			{
+				if(is_array($v))
+				{
+					if(!empty($v[$nodeName]))
+					{
+						$stu = $v[$nodeName];
+						echo $nodeName;
+						break;
+					}
+					if(!empty($v[$childName]))
+					{
+						$stu = $this->getNextCycleNode($v[$childName], $childName, $nodeName);
+					}
+					if($stu)
+					{
+						break;
+					}
+				}
+				
+			}
+		}
+		return $stu;
+	}
+	
+	
+	/**
+	 * 生成多层嵌套循环
+	 */
+	public function cycleNodes($data, $structure, $childName = null, $nodeName = null)
+	{
+		$str = '';
+		$childName = $childName ? $childName : 'children';
+		$nodeName = $nodeName ? $nodeName : 'children';
+		$sKeys = array('label', 'content', $childName, $nodeName);
+		foreach($data as $k => $v)
+		{
+			// TODO 循环节点可能在很深的层次，因此要先找到循环节点
+			
+		}
+	}
+	
 	
 }

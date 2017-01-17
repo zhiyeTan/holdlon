@@ -130,7 +130,8 @@ class Application
 			array('title'=>'t2', 'subtit'=>'s2', 'content'=>'c2'),
 			array('title'=>'t3', 'subtit'=>'s3', 'content'=>'c3')
 		);
-		echo $html->cycleNode($data, $structure);
+		//echo $html->cycleNode($data, $structure);
+		var_dump($html->getNextCycleNode($structure, 'children', 'node'));
 		exit;
 		
 		// 绑定一个异步的关于访问时间和ip的日志记录操作的post请求到通道中
