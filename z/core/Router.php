@@ -178,23 +178,47 @@ class Router
 	 */
 	public static function parse()
 	{
-		// 把s参数处理成数组
-		if(isset($_GET['s']))
+		// 取得完整的URL参数
+		$queryString = strtr($_SERVER['QUERY_STRING'], array('.'=>'@@'));
+		// 修正s参数为e参数
+		$queryString = strtr($queryString, array('s='=>'e='));
+		
+		// 把URL参数处理成数组
+		if($queryString)
 		{
-			if(strpos($_GET['s'], '.'))
+			if(strpos($queryString, '/'))
 			{
-				$tmps = explode('.', $_GET['s']);
-				$_GET['s'] = $tmps[0];
+				$queryArr = explode('/', trim($queryString, '/'));
 			}
-			$queryArr = explode('/', trim($_GET['s'], '/'));
+			else
+			{
+				parse_str($queryString, $queryArr);
+			}
+			$queryArr = array_map(
+				function($v)
+				{
+					if(strpos($v, '@@') !== false)
+					{
+						$tmp = explode('@@', $v);
+						$v = $tmp[0];
+					}
+					if(strpos($v, '=') !== false)
+					{
+						$tmp = explode('=', $v);
+						$v = $tmp[1];
+					}
+					return $v;
+				}, $queryArr
+			);
+			// 重置非默认路由模式的键名
+			$queryArr = self::$pattern ? array_values($queryArr) : $queryArr;
 		}
-		// 没有s参数时
+		// 没有URL参数时
 		else
 		{
 			$tmps = explode('.', self::$selfScript);
 			$queryArr = array($tmps[0]);
 		}
-		
 		// 将API/Async请求强制重置为路由3模式
 		if(isset($queryArr[0]) && ($queryArr[0] == 'api' || $queryArr[0] == 'async'))
 		{
@@ -211,6 +235,7 @@ class Router
 		switch(self::$pattern)
 		{
 			case 1:
+				// 协议名://主机名/模块名称(index时省略)/入口文件名-控制器名称-操作名称-key-value-key-value....html
 				$queryStr = isset($queryArr[1]) ? $queryArr[1] : $queryArr[0];
 				$_GET['m'] = isset($queryArr[1]) ? $queryArr[0] : 'index';
 				// 拆解为数组
@@ -228,6 +253,7 @@ class Router
 				}
 				break;
 			case 2:
+				// 协议名://主机名/模块名称(index时省略)/六位字符串.html
 				$queryStr = isset($queryArr[1]) ? $queryArr[1] : $queryArr[0];
 				$fileName = self::$urlMaps . $queryStr;
 				// 如存在短地址地图，取出数据并合并到$_GET中
@@ -250,6 +276,7 @@ class Router
 				}
 				break;
 			case 3:
+				// 协议名://主机名/入口文件/模块名称/控制器名称/操作名称/key/value/key/value...
 				$_GET['e'] = isset($queryArr[0]) ? $queryArr[0] : 'index';
 				$_GET['m'] = isset($queryArr[1]) ? $queryArr[1] : 'index';
 				$_GET['c'] = isset($queryArr[2]) ? $queryArr[2] : 'index';
@@ -265,7 +292,8 @@ class Router
 					}
 				}
 				break;
-			default: ;
+			default:
+				$_GET = array_merge($queryArr, $_GET);
 		}
 		self::setDefaultEMCA();
 		// 设置当前请求的唯一缓存标识

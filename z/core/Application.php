@@ -86,54 +86,6 @@ class Application
 	 */
 	public static function run()
 	{
-		$html = new Html();
-		//echo $html->create('input', array('content'=>'sldfjosdfj', 'class'=>array('sdf', 'dsere')));
-		$structure = array(
-			array(
-				'label'=>'div',
-				'content'=>'',
-				'id'=>'div1',
-				'class'=>'sdf',
-				'data-id'=>12,
-				'children'=>array(
-					'label'=>'h2',
-					'content'=>'$title$'
-				)
-			),
-			array(
-				'label'=>'div',
-				'content'=>'',
-				'id'=>'div2',
-				'class'=>'sdf2',
-				'data-id'=>13,
-				'children'=>array(
-					array(
-						'label'=>'p',
-						'class'=>'subtit',
-						'content'=>'$subtit$',
-						'children'=>array(
-							'label'=>'span',
-							'content'=>'下标'
-						)
-					),
-					array(
-						'label'=>'p',
-						'class'=>'content',
-						'content'=>'$content$'
-					)
-				)
-			)
-		);
-		//echo $html->createNode($structure);
-		$data = array(
-			array('title'=>'t1', 'subtit'=>'s1', 'content'=>'c1'),
-			array('title'=>'t2', 'subtit'=>'s2', 'content'=>'c2'),
-			array('title'=>'t3', 'subtit'=>'s3', 'content'=>'c3')
-		);
-		//echo $html->cycleNode($data, $structure);
-		var_dump($html->getNextCycleNode($structure, 'children', 'node'));
-		exit;
-		
 		// 绑定一个异步的关于访问时间和ip的日志记录操作的post请求到通道中
 		Tunnel::onAsync('post', 'z\core\log', 'save', 1, array('iplog', date('Y-m-d H:i:s', $_SERVER['REQUEST_TIME']) . ' ' . Request::ip(0)));
 		// 初始化cookie

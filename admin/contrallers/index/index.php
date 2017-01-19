@@ -12,6 +12,7 @@ class index extends \admin\adminContraller
 {
 	public function index()
 	{
+		//echo $_GET['m'], $_GET['c'], $_GET['a'];exit;
 		self::chkLogin();
 		return self::render('index');
 	}

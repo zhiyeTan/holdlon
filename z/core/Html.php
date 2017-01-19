@@ -184,11 +184,12 @@ class Html
 	{
 		$str = '';
 		$childName = $childName ? $childName : 'children';
-		$nodeName = $nodeName ? $nodeName : 'children';
+		$nodeName = $nodeName ? $nodeName : 'cycleNode';
 		$sKeys = array('label', 'content', $childName, $nodeName);
 		foreach($data as $k => $v)
 		{
 			// TODO 循环节点可能在很深的层次，因此要先找到循环节点
+			// 同级节点、子节点
 			
 		}
 	}
