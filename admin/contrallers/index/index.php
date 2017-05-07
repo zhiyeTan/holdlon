@@ -10,35 +10,33 @@ use z\basic\admin as admin;
 
 class index extends \admin\adminContraller
 {
+	// 后台首页
 	public function index()
 	{
 		//echo $_GET['m'], $_GET['c'], $_GET['a'];exit;
 		self::chkLogin();
+		self::chkPermission();
 		return self::render('index');
 	}
 	
+	// 后台登录
 	public function login()
 	{
-		$idxUrlDate = array(
-			'e' => 'admin',
-			'm' => 'index',
-			'c' => 'index',
-			'a' => 'index'
-		);
 		$model = array();
 		// 验证表单是否合法
 		if(validate::is('form') && validate::is('formToken'))
 		{
 			$model = $_POST['form'];
 			// 验证令牌
+			$account = self::gets('account');
 			if(validate::is('token'))
 			{
 				// 这里继续验证表单元素的合法性
-				if(!self::gets('account') || !admin::hasAccount(self::gets('account')))
+				if(!$account || !admin::hasAccount($account))
 				{
 					$model['message'] = '用户名不存在!';
 				}
-				elseif(!self::gets('password') || !admin::chkPassword(self::gets('account'), self::gets('password')))
+				elseif(!self::gets('password') || !admin::chkPassword($account, self::gets('password')))
 				{
 					$model['message'] = '密码不正确';
 				}
@@ -46,7 +44,14 @@ class index extends \admin\adminContraller
 				{
 					// 保存登录状态
 					session::set('loginStatus', true);
-					header('Location: ' . router::create($idxUrlDate) . PHP_EOL);
+					session::set('account', $account);
+					$idxUrlData = array(
+						'e' => $_GET['e'],
+						'm' => 'index',
+						'c' => 'index',
+						'a' => 'index'
+					);
+					header('Location: ' . router::create($idxUrlData) . PHP_EOL);
 					exit(0);
 				}
 			}
@@ -62,5 +67,19 @@ class index extends \admin\adminContraller
 			$model['token'] = session::getToken();
 		}
 		return self::render('login', $model);
+	}
+	
+	// 退出登录
+	public function logout()
+	{
+		session::delete(array('loginStatus', 'account'));
+		$idxUrlData = array(
+			'e' => $_GET['e'],
+			'm' => 'index',
+			'c' => 'index',
+			'a' => 'login'
+		);
+		header('Location: ' . router::create($idxUrlData) . PHP_EOL);
+		exit(0);
 	}
 }

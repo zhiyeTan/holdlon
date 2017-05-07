@@ -68,7 +68,17 @@ class Session
 	// 删除session
 	public static function delete($key)
 	{
-		unset($_SESSION[$key]);
+		if(is_array($key))
+		{
+			foreach($key as $v)
+			{
+				unset($_SESSION[$v]);
+			}
+		}
+		else
+		{
+			unset($_SESSION[$key]);
+		}
 	}
 	
 	// 销毁session

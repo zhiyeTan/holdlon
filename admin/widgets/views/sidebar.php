@@ -1,17 +1,30 @@
 <div id="rpm-sidebar">
-	<a href="index.php" class="rpm-sidebar-title"><i class="iconfont">&#xe694;</i></a>
+	<p class="rpm-sidebar-title"><i class="iconfont">&#xe694;</i></p>
 	<ul>
-		<li><a class="on-sidebar-firsta" href="javascript:;"><h2><i class="dashicons dashicons-menu-a"></i>文章管理</h2></a></li>
-		<li><a href="javascript:;"><h2><i class="dashicons dashicons-menu-lk"></i>友链管理</h2></a></li>
-		<li><a href="javascript:;"><h2><i class="dashicons dashicons-menu-p"></i>管理与权限</h2></a></li>
+		<?php
+		$currName = '';
+		foreach($widgetData['sidebar'] as $k => $v){
+		?>
+			<li><a href="javascript:;"><h2><i class="dashicons dashicons-menu-<?php echo $k; ?>"></i><?php echo $v['name']; ?></h2></a></li>
+			<?php
+			if($v['module'] == $_GET['m'])
+			{
+				$currName = $v['name'];
+			}
+			?>
+		<?php } ?>
 	</ul>
 </div>
-<div id="rpm-sidebar-stair">
-	<p id="rpm-sidebar-stair-title">文章管理</p>
-	<ul>
-		<li><a class="on-sidebar-seconda" href=".">文章列表</a></li>
-		<li><a href=".">添加文章</a></li>
-		<li><a href=".">文章分类</a></li>
-		<li><a href=".">添加分类</a></li>
+<div id="rpm-sidebar-stair"<?php if(!$currName){ ?> style="display: none;"<?php } ?>>
+	<p id="rpm-sidebar-stair-title"><?php if($currName){ ?>文章管理<?php } ?></p>
+	<?php foreach($widgetData['sidebar'] as $k => $v){ ?>
+	<ul<?php if($v['module'] != $_GET['m']){ ?> style="display: none;"<?php } ?>>
+		<?php
+		foreach($v['list'] as $kk => $vv){
+		if($vv['display']){
+		?>
+		<li><a<?php if($_GET['a'] == $kk){ ?> class="on-sidebar-seconda"<?php } ?> href="<?php echo $vv['url']; ?>"><?php echo $vv['name']; ?></a></li>
+		<?php }} ?>
 	</ul>
+	<?php } ?>
 </div>

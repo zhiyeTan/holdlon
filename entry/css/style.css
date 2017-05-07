@@ -54,6 +54,19 @@ a{text-decoration: none;}
 .clear{
 	clear: both;
 }
+.clearfix:after,
+.clearfix:before {
+	content: "";
+	display: table;
+}
+
+.clearfix:after {
+	clear: both
+}
+
+.clearfix {
+	/* [disabled]zoom:1; */
+}
 
 
 /* 提示信息样式 */

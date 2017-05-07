@@ -7,12 +7,13 @@ use z\core\Router as Router;
 
 class adminContraller extends \z\core\Contraller
 {
+	// 检查登录状态
 	protected static function chkLogin()
 	{
 		// 登录状态
 		$status = Session::get('loginStatus');
 		// 若不是登录状态或cookie未保存有session_name
-		if(!$status || !isset($_COOKIE[session_name()]))
+		if(!$status)
 		{
 			$urldata = array(
 				'e' => $_GET['e'],
@@ -22,10 +23,48 @@ class adminContraller extends \z\core\Contraller
 			);
 			$url = Router::create($urldata);
 			header('Location: ' . $url . PHP_EOL);
+			exit(0);
 		}
 	}
+	
+	// 检查访问权限
+	protected static function chkPermission($getMap = 0)
+	{
+		$maps = require(APP_PATH . 'adminMaps.php');
+		// 优先处理可访问地图的获取
+		if($getMap)
+		{
+			// TODO 这里遍历地图做权限校验
+			return $maps;
+		}
+		// TODO 先对当前访问的栏目的权限进行判断，若没有权限则终止访问，跳转回首页
+	}
+	
+	// 获取表单元素
 	protected static function gets($key)
 	{
 		return isset($_POST['form'][$key]) ? $_POST['form'][$key] : !1;
 	}
+	
+	// 获取二级栏目名称
+	protected static function getColName()
+	{
+		$name = '';
+		$maps = require(APP_PATH . 'adminMaps.php');
+		foreach($maps as $k => $v)
+		{
+			if($v['module'] == $_GET['m'])
+			{
+				foreach($v['list'] as $kk => $vv)
+				{
+					if($_GET['a'] == $kk)
+					{
+						$name = $vv['name'];
+					}
+				}
+			}
+		}
+		return $name;
+	}
+	
 }
