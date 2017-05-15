@@ -13,9 +13,6 @@ class index extends \admin\adminContraller
 	// 后台首页
 	public function index()
 	{
-		//echo $_GET['m'], $_GET['c'], $_GET['a'];exit;
-		self::chkLogin();
-		self::chkPermission();
 		return self::render('index');
 	}
 	
@@ -26,17 +23,18 @@ class index extends \admin\adminContraller
 		// 验证表单是否合法
 		if(validate::is('form') && validate::is('formToken'))
 		{
+			$admin = admin::init();
 			$model = $_POST['form'];
 			// 验证令牌
 			$account = self::gets('account');
 			if(validate::is('token'))
 			{
 				// 这里继续验证表单元素的合法性
-				if(!$account || !admin::hasAccount($account))
+				if(!$account || !$admin->hasAccount($account))
 				{
 					$model['message'] = '用户名不存在!';
 				}
-				elseif(!self::gets('password') || !admin::chkPassword($account, self::gets('password')))
+				elseif(!self::gets('password') || !$admin->chkPassword($account, self::gets('password')))
 				{
 					$model['message'] = '密码不正确';
 				}
@@ -51,8 +49,7 @@ class index extends \admin\adminContraller
 						'c' => 'index',
 						'a' => 'index'
 					);
-					header('Location: ' . router::create($idxUrlData) . PHP_EOL);
-					exit(0);
+					zHeader(router::create($idxUrlData));
 				}
 			}
 			else
@@ -79,7 +76,6 @@ class index extends \admin\adminContraller
 			'c' => 'index',
 			'a' => 'login'
 		);
-		header('Location: ' . router::create($idxUrlData) . PHP_EOL);
-		exit(0);
+		zHeader(router::create($idxUrlData));
 	}
 }

@@ -122,6 +122,7 @@ class Model
 		{
 			// 判断是否索引数组
 			$keys = array_keys($mixed);
+			// 关联数组
 			if($keys != array_keys($keys))
 			{
 				foreach($mixed as $k => $v)
@@ -136,34 +137,38 @@ class Model
 					}
 				}
 			}
+			// 索引数组
 			else
 			{
+				// 二维数组
 				if(is_array(reset($mixed)))
 				{
 					foreach($mixed as $v)
 					{
 						$v[1] = isset($v[1]) ? $v[1] : '';
-						$v[2] = isset($v[2]) ? $v[2] : '';
 						if(in_array(strtoupper($v[1]), $funcRule))
 						{
-							self::$field[] = array($v[0], $v[1], $v[2]);
+							self::$field[] = array($v[0], $v[1], isset($v[2]) ? $v[2] : '');
 						}
 						else
 						{
-							self::$field[] = array($v[0], $v[2], $v[1]);
+							self::$field[] = isset($v[2]) ? array($v[0], '', $v[2]) : array($v[0], '', $v[1]);
 						}
 					}
 				}
+				// 一维数组
 				else
 				{
-					$key = array_keys($mixed);
-					$val = array_values($mixed);
-					self::$field[] = array(reset($key), reset($val), '');
+					foreach($mixed as $v)
+					{
+						self::$field[] = array($v, '', '');
+					}
 				}
 			}
 		}
 		else
 		{
+			// 单字段
 			self::$field[] = array($mixed, '', '');
 		}
 		return self::$_instance;
@@ -332,12 +337,13 @@ class Model
 	}
 	
 	/**
-	 * 绑定数据
+	 * 绑定数据（并将原始数据转为二维数组）
 	 * @param: array $mixed 数据数组
 	 * @return: 当前对象
 	 */
 	public static function data($array)
 	{
+		$newData = array();
 		foreach($array as $key => $val)
 		{
 			// 二维数据
@@ -346,28 +352,27 @@ class Model
 				foreach($val as $k => $v)
 				{
 					// 修正字符串
-					if(is_string($v))
-					{
-						$array[$key][$k] = "'" . $v . "'";
-					}
+					$newData[$key][$k] = is_string($v) ? "'" . $v . "'" : $v;
 				}
 			}
 			else
 			{
 				// 修正字符串
-				if(is_string($val))
-				{
-					$array[$key] = "'" . $val . "'";
-				}
+				$newData[0][$key] = is_string($val) ? "'" . $val . "'" : $val;
 			}
 		}
-		self::$data = $array;
+		self::$data = $newData;
 		return self::$_instance;
 	}
 	
 	// 拼接查询字段
 	private static function fieldToStr()
 	{
+		// 空值则认为是获取全部字段
+		if(!self::$field)
+		{
+			return '*';
+		}
 		$str = '';
 		foreach(self::$field as $v)
 		{

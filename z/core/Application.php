@@ -86,6 +86,17 @@ class Application
 	 */
 	public static function run()
 	{
+		//*
+		$i = Upload::init();
+		
+		//echo $i->upload($_FILES['img_url']);
+		echo '<pre>';
+		//var_dump(imagecreatefromjpeg(ENTRY_PATH . '\uploads\201705\149475431417.jpg'));
+		print_r($i::addWaterMark(ENTRY_PATH . '\images\201705\149475431417.jpg'));
+		exit;
+		//*/
+		
+		
 		// 绑定一个异步的关于访问时间和ip的日志记录操作的post请求到通道中
 		Tunnel::onAsync('post', 'z\core\log', 'save', 1, array('iplog', date('Y-m-d H:i:s', $_SERVER['REQUEST_TIME']) . ' ' . Request::ip(0)));
 		// 初始化cookie

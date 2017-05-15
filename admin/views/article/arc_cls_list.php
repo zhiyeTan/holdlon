@@ -5,17 +5,12 @@
 	<table class="rpm-list-table">
 		<tbody>
 			<tr>
-				<th>文章标题</th>
-				<th>文章状态</th>
-				<th>操作</th>
+				<th>分类名称</th>
+				<th>状态</th>
+				<th>排序</th>
+				<th style="text-indent: ;">操作</th>
 			</tr>
-			<tr class="rpm-table-single-row">
-				<td>{$l.cat_name}</td>
-				<td><i class="dashicons dashicons-icon-{if $l.is_hot}yes{else}no{/if}"></i></td>
-				<td class="rpm-text-align-left">
-					<a class="rpm-handle_btn" href="#" title="删除"><i class="iconfont icon-handle-btn-del"></i></a>
-				</td>
-			</tr>
+			<?php echo $data['category']; ?>
 		</tbody>
 	</table>
 </div>

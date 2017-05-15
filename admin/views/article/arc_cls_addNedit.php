@@ -12,19 +12,18 @@
 				</li>
 				<li class="rpm-form-row-full">
 					<label>封面图片</label>
-					<input class="rpm-file-input" type="file" name="form[img_url]" value="">
-					<?php if(isset($data['imgurl'])){ ?>
+					<input class="rpm-file-input" type="file" name="img_url" value="">
+					<?php if(isset($data['imgurl']) && $data['imgurl']){ ?>
 					<a href="<?php echo $data['imgurl']; ?>" target="_blank"><i class="dashicons dashicons-icon-yes"></i></a>
 					<?php }else{ ?>
 					<i class="dashicons dashicons-icon-no"></i>
 					<?php } ?>
 				</li>
 				<li class="rpm-form-row-full">
-					<label for="parent_id">所属分类</label>
-					<select name="parent_id" id="parent_id">
-						<?php foreach($data['category'] as $k => $v){ ?>
+					<label>所属分类</label>
+					<select name="form[parent_id]">
 						<option value="0">顶级分类</option>
-						<?php } ?>
+						<?php echo $data['category']; ?>
 					</select>
 				</li>
 			</ul>

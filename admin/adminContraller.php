@@ -7,6 +7,15 @@ use z\core\Router as Router;
 
 class adminContraller extends \z\core\Contraller
 {
+	// 统一对非登录页进行登录和目录权限检查
+	public function __construct()
+	{
+		if($_GET['a'] != 'login')
+		{
+			self::chkLogin();
+			self::chkPermission();
+		}
+	}
 	// 检查登录状态
 	protected static function chkLogin()
 	{
@@ -22,7 +31,7 @@ class adminContraller extends \z\core\Contraller
 				'a' => 'login',
 			);
 			$url = Router::create($urldata);
-			header('Location: ' . $url . PHP_EOL);
+			zHeader($url);
 			exit(0);
 		}
 	}
@@ -37,7 +46,7 @@ class adminContraller extends \z\core\Contraller
 			// TODO 这里遍历地图做权限校验
 			return $maps;
 		}
-		// TODO 先对当前访问的栏目的权限进行判断，若没有权限则终止访问，跳转回首页
+		// TODO 对当前访问的栏目的权限进行判断，若没有权限则终止访问，跳转回首页
 	}
 	
 	// 获取表单元素
@@ -67,4 +76,10 @@ class adminContraller extends \z\core\Contraller
 		return $name;
 	}
 	
+	// 检查登录以及权限
+	protected static function chkAll()
+	{
+		self::chkLogin();
+		self::chkPermission();
+	}
 }
