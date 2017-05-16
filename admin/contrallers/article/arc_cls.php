@@ -5,6 +5,7 @@ namespace contrallers\article;
 use z\core\Router as router;
 use z\core\Session as session;
 use z\core\Validate as validate;
+use z\core\Upload as upload;
 
 use z\basic\arc_category as arcc;
 
@@ -36,23 +37,34 @@ class arc_cls extends \admin\adminContraller
 					// 获取数据
 					$newData = $model;
 					unset($newData['token']);
-					// TODO 处理图片上传，并把路径加入到数据数组中
+					$imgs = upload::uploadFileBatch($_FILES, true, true);
+					$newData['imgurl'] = $imgs['imgurl'][0];
 					if($arcc->add($newData))
 					{
 						$successUrlData = array(
 							'e' => $_GET['e'],
-							'm' => $_GET['m'],
-							'c' => $_GET['c'],
+							'm' => 'index',
+							'c' => 'tips',
 							'a' => 'success'
 						);
 						zHeader(router::create($successUrlData));
 					}
 				}
+				else
+				{
+					// TODO 验证失败
+				}
 			}
 			else
 			{
 				// 这里是重复提交了
-				$model['message'] = '请勿重复提交!';
+				$repeatUrlData = array(
+					'e' => $_GET['e'],
+					'm' => 'index',
+					'c' => 'tips',
+					'a' => 'repeat'
+				);
+				zHeader(router::create($repeatUrlData));
 			}
 		}
 		else
@@ -85,14 +97,19 @@ class arc_cls extends \admin\adminContraller
 				{
 					// 获取数据
 					$newData = $model;
-					unset($newData['token']);
+					unset($newData['token'], $newData['imgurl']);
+					if(!empty($_FILES['imgurl']))
+					{
+						$imgs = upload::uploadFileBatch($_FILES, true, true);
+						$newData['imgurl'] = $imgs['imgurl'][0];
+					}
 					// TODO 处理图片上传，并把路径加入到数据数组中
-					if($arcc->add($newData))
+					if($arcc->edit($_GET['id'], $newData))
 					{
 						$successUrlData = array(
 							'e' => $_GET['e'],
-							'm' => $_GET['m'],
-							'c' => $_GET['c'],
+							'm' => 'index',
+							'c' => 'tips',
 							'a' => 'success'
 						);
 						zHeader(router::create($successUrlData));
@@ -102,7 +119,13 @@ class arc_cls extends \admin\adminContraller
 			else
 			{
 				// 这里是重复提交了
-				$model['message'] = '请勿重复提交!';
+				$repeatUrlData = array(
+					'e' => $_GET['e'],
+					'm' => 'index',
+					'c' => 'tips',
+					'a' => 'repeat'
+				);
+				zHeader(router::create($repeatUrlData));
 			}
 		}
 		else
@@ -120,7 +143,16 @@ class arc_cls extends \admin\adminContraller
 	}
 	public function arc_cls_delete()
 	{
-		
+		$arcc = arcc::init();
+		$UrlData = array(
+			'e' => $_GET['e'],
+			'm' => 'index',
+			'c' => 'tips'
+		);
+		// 当状态软删除时则进行真实删除，否则软删除
+		$res = $arcc->getStatus($_GET['id']) != 2 ? $arcc->delete($_GET['id']) : $arcc->realDelete($_GET['id']);
+		$UrlData['a'] = $res ? 'success' : 'fail';
+		zHeader(router::create($UrlData));
 	}
 }
 

@@ -51,15 +51,39 @@ class arc_category
 		return $res;
 	}
 	
+	// 获取指定分类信息
+	public function getInfo($id)
+	{
+		return self::$db->where(array('id', '=', $id))->getRow();
+	}
+	
+	// 查询状态
+	public function getStatus($id)
+	{
+		return self::$db->field('status')->where(array('id', '=', $id))->getOne();
+	}
+	
 	// 添加分类
 	public function add($data)
 	{
 		return self::$db->field(array_keys($data))->data(array_values($data))->insert();
 	}
 	
-	// 获取指定分类信息
-	public function getInfo($id)
+	// 修改分类
+	public function edit($id, $data)
 	{
-		return self::$db->where(array('id', '=', $id))->getRow();
+		return self::$db->field(array_keys($data))->data(array_values($data))->where(array('id', '=', $id))->update();
+	}
+	
+	// 删除分类
+	public function delete($id)
+	{
+		return self::$db->field('status')->data(2)->where(array('id', '=', $id))->update();
+	}
+	
+	// 真是删除
+	public function realDelete($id)
+	{
+		return self::$db->where(array('id', '=', $id))->delete();
 	}
 }

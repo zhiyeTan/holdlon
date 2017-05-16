@@ -338,13 +338,14 @@ class Model
 	
 	/**
 	 * 绑定数据（并将原始数据转为二维数组）
-	 * @param: array $mixed 数据数组
+	 * @param: array $mixed 数据
 	 * @return: 当前对象
 	 */
-	public static function data($array)
+	public static function data($mixed)
 	{
 		$newData = array();
-		foreach($array as $key => $val)
+		$mixed = is_array($mixed) ? $mixed : array($mixed);
+		foreach($mixed as $key => $val)
 		{
 			// 二维数据
 			if(is_array($val))
@@ -352,13 +353,13 @@ class Model
 				foreach($val as $k => $v)
 				{
 					// 修正字符串
-					$newData[$key][$k] = is_string($v) ? "'" . $v . "'" : $v;
+					$newData[$key][$k] = is_numeric($v) ? $v : "'" . $v . "'";
 				}
 			}
 			else
 			{
 				// 修正字符串
-				$newData[0][$key] = is_string($val) ? "'" . $val . "'" : $val;
+				$newData[0][$key] = is_numeric($val) ? $val : "'" . $val . "'";
 			}
 		}
 		self::$data = $newData;
@@ -453,16 +454,18 @@ class Model
 	private static function updateDateToStr()
 	{
 		$str = '';
-		$fields = array_keys(self::$field);
-		foreach($fields as $k => $v)
+		foreach(self::$data as $v)
 		{
-			// 处理数据
-			$data = !empty(self::$data[$k]) ? self::$data[$k] : '\'\'';
-			if(preg_match('/[\+\-\*\/\!\%]/', $data))
+			foreach(self::$field as $kk => $vv)
 			{
-				$data = $v . $data;
+				// 处理数据
+				$data = !empty($v[$kk]) ? $v[$kk] : '\'\'';
+				if(!empty($data) && preg_match('/[\+\-\*\/\!\%]/', $data))
+				{
+					$data = '`' . $vv[0] . '`' . trim($data, ',');
+				}
+				$str .= '`' . $vv[0] . '`=' . $data . ',';
 			}
-			$str .= '`' . $v . '`=' . $data . ',';
 		}
 		return rtrim($str, ',');
 	}

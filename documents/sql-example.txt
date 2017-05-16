@@ -7,6 +7,7 @@ V5.0+：
 ->table(array('admin', 'user'))
 
 V5.4+：
+->table('admin')
 ->table(['admin', 'user'])
 
 
@@ -24,6 +25,7 @@ V5.0+：
 ->field(array(array('account','','a'), array('*','count','b')))
 
 V5.4+：
+->field('id')
 ->field(['account', 'password'])
 ->field(['account'=>'count'])
 ->field(['account'=>'a', 'id'=>'max'])
@@ -78,6 +80,7 @@ V5.0+：
 ->group(array('age', 'familyName'))
 
 V5.4+：
+->group('age')
 ->group(['age', 'familyName'])
 
 
@@ -106,6 +109,7 @@ V5.0+：
 ->order(array('age'=>'asc', 'sort'=>'desc'))
 
 V5.4+：
+->order('age')
 ->order(['age', 'sort'])
 ->order(['age'=>'asc', 'sort'=>'desc'])
 
@@ -124,9 +128,11 @@ V5.0+：
 data的几种设置方法：
 
 V5.0+：
+->data(1)
 ->data(array(1, 'admin', 'passwordkey'))
 ->data(array(array(1, 'admin', 'passwordkey'), array(2, 'admin2', 'passwordkey2')))
 
 V5.4+：
+->data(1)
 ->data([1, 'admin', 'passwordkey'])
 ->data([[1, 'admin', 'passwordkey'], [2, 'admin2', 'passwordkey2']]]

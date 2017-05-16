@@ -12,9 +12,7 @@
 				</li>
 				<li class="rpm-form-row-full">
 					<label>封面图片</label>
-					<input class="rpm-file-input" type="file" name="imgurl[]" value="">
-					<input class="rpm-file-input" type="file" name="imgurl[]" value="">
-					<input class="rpm-file-input" type="file" name="cover" value="">
+					<input class="rpm-file-input" type="file" name="imgurl" value="">
 					<?php if(isset($data['imgurl']) && $data['imgurl']){ ?>
 					<a href="<?php echo $data['imgurl']; ?>" target="_blank"><i class="dashicons dashicons-icon-yes"></i></a>
 					<?php }else{ ?>
@@ -52,7 +50,7 @@
 				</li>
 				<li class="rpm-form-row-full">
 					<label>是否显示</label>
-					<input type="checkbox" name="form[static]" value="1"<?php if(isset($data['static']) && $data['static'] == 1){ ?> checked="checked"<?php } ?>>
+					<input type="checkbox" name="form[status]" value="1"<?php if(isset($data['status']) && $data['status'] == 1){ ?> checked="checked"<?php } ?>>
 				</li>
 			</ul>
 		</div>

@@ -86,54 +86,6 @@ class Application
 	 */
 	public static function run()
 	{
-		//*
-		$i = Upload::init();
-		
-		$f = Array
-		(
-		    'imgurl' => Array
-		        (
-		            0 => Array
-		                (
-		                    'name' => '主图011.jpg',
-		                    'type' => 'image/jpeg',
-		                    'tmp_name' => 'F:\xampp\tmp\phpDE4A.tmp',
-		                    'error' => '0',
-		                    'size' => '136895'
-		                ),
-		
-		            1 => Array
-		                (
-		                    'name' => '主图33006-9.jpg',
-		                    'type' => 'image/jpeg',
-		                    'tmp_name' => 'F:\xampp\tmp\phpDE5B.tmp',
-		                    'error' => '0',
-		                    'size' => '182224'
-		                )
-		
-		        ),
-		
-		    'cover' => Array
-		        (
-		            0 => Array
-		                (
-		                    'name' => '主图011-2.jpg',
-		                    'type' => 'image/jpeg',
-		                    'tmp_name' => 'F:\xampp\tmp\phpDE6B.tmp',
-		                    'error' => '0',
-		                    'size' => '122483'
-		                )
-		
-		        )
-		
-		);
-		//echo $i->upload($_FILES['img_url']);
-		echo '<pre>';
-		print_r($i::uploadFileBatch($f));
-		exit;
-		//*/
-		
-		
 		// 绑定一个异步的关于访问时间和ip的日志记录操作的post请求到通道中
 		Tunnel::onAsync('post', 'z\core\log', 'save', 1, array('iplog', date('Y-m-d H:i:s', $_SERVER['REQUEST_TIME']) . ' ' . Request::ip(0)));
 		// 初始化cookie

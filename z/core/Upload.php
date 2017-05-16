@@ -70,7 +70,7 @@ class Upload
 		$fileName = '';
 		while (empty($fileName))
 		{
-			$fileName = $dir . time() . mt_rand(0, 9) . mt_rand(0, 9) . $suffix;
+			$fileName = $dir . time() . mt_rand(0, 9) . mt_rand(0, 9) . '.' . $suffix;
 			$fileName = is_file($fileName) ? '' : $fileName;
 		}
 		return $fileName;
@@ -80,7 +80,7 @@ class Upload
 	private static function getSuffix($fileName)
 	{
 		$pos = strripos($fileName, '.');
-		return $pos !== false ? substr($fileName, $pos) : '';
+		return $pos !== false ? substr($fileName, $pos + 1) : '';
 	}
 	
 	// 获取不含后缀名的文件名
@@ -88,6 +88,13 @@ class Upload
 	{
 		$res = explode('.', basename($fileName));
 		return $res[0];
+	}
+	
+	// 调试错误
+	public static function debug()
+	{
+		echo self::$error;
+		exit;
 	}
 	
 	/**
@@ -137,7 +144,7 @@ class Upload
 		{
 			foreach($v as $vv)
 			{
-				$uploadResult[$k][] = uploadFile($vv, $addWater, $mkThumb, $mixed, $isSquare, $quality);
+				$uploadResult[$k][] = self::uploadFile($vv, $addWater, $mkThumb, $mixed, $isSquare, $quality);
 			}
 		}
 		return $uploadResult;
@@ -152,18 +159,12 @@ class Upload
 	 * @param: $isSquare     boolean      缩略图是否为正方形
 	 * @param: $quality      number       质量
 	 */
-	public static function uploadFile($file, $addWater = false, $mkThumb = false, $mixed = '', $isSquare = false, $quality = 0)
+	private static function uploadFile($file, $addWater = false, $mkThumb = false, $mixed = '', $isSquare = false, $quality = 0)
 	{
 		// 检查是否存在错误
 		if($file['error'])
 		{
 			self::$error = '上传错误！';
-			return false;
-		}
-		// 检查文件后缀名和文件类型是否一致
-		if(stripos($file['type'], self::getSuffix($file['name'])) === false)
-		{
-			self::$error = '文件类型异常！';
 			return false;
 		}
 		// 检查文件大小
@@ -181,14 +182,24 @@ class Upload
 		if(move_uploaded_file($file['tmp_name'], $fileName))
 		{
 			@chmod($fileName,0755);
+			$newFileName = false;
 			// 判断上传文件是否为图片，并作后续处理
 			if(self::isType($file['type'], 'image'))
 			{
+				
+				// 使用GD生成一张与原图尺寸一致的质量为100的图片存放在images中
+				// 避免美工没有对图片进行必要压缩而造成图片过大，加载过慢的情况
+				$res = self::mkThumbBatch($fileName, $addWater, $mkThumb, 100);
+				$newFileName = $res[0];
+				@chmod($newFileName,0755);
+				/*
+				TODO 以下代码将直接复制图片到images中
 				// 在images下建立以年月命名的文件夹
 				$newImagesDir = self::mkNewDir(self::$imagesDir);
 				$newFileName = $newImagesDir . basename($fileName);
 				// 复制图片到文件夹中
 				copy($fileName, $newFileName);
+				*/
 				// 添加水印
 				if($addWater)
 				{
@@ -198,13 +209,11 @@ class Upload
 				{
 					self::mkThumbBatch($newFileName, $mixed, $isSquare, $quality);
 				}
-				return $newFileName;
 			}
 			// TODO 这里增加对其他文件类型的判断以及处理
-			else
-			{
-				return $fileName;
-			}
+			else{}
+			// 返回相对路径
+			return str_replace('\\', '/', str_replace(dirname(dirname(dirname($newFileName))), '', $newFileName));
 		}
 		else
 		{
@@ -274,7 +283,8 @@ class Upload
 			$imgThumb = imagecopyresized($srcThumb, $srcIamge, 0, 0, 0, 0, $thumbWidth, $thumbHeight, $imgWidth, $imgHeight);
 		}
 		// 缩略图统一生成jpg格式
-		$fileName = $fileDir . $realName . '@' . $thumbWidth . 'x' . $thumbHeight . '.jpg';
+		$appendName = $thumbWidth == $imgWidth && $thumbHeight == $imgHeight ? '' : ('@' . $thumbWidth . 'x' . $thumbHeight);
+		$fileName = $fileDir . $realName . $appendName . '.jpg';
 		// 激活隔行扫描（渐进式显示JPG）
 		imageinterlace($srcThumb, 1);
 		// 输出图像到文件
