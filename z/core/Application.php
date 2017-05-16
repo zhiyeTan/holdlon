@@ -89,10 +89,47 @@ class Application
 		//*
 		$i = Upload::init();
 		
+		$f = Array
+		(
+		    'imgurl' => Array
+		        (
+		            0 => Array
+		                (
+		                    'name' => '主图011.jpg',
+		                    'type' => 'image/jpeg',
+		                    'tmp_name' => 'F:\xampp\tmp\phpDE4A.tmp',
+		                    'error' => '0',
+		                    'size' => '136895'
+		                ),
+		
+		            1 => Array
+		                (
+		                    'name' => '主图33006-9.jpg',
+		                    'type' => 'image/jpeg',
+		                    'tmp_name' => 'F:\xampp\tmp\phpDE5B.tmp',
+		                    'error' => '0',
+		                    'size' => '182224'
+		                )
+		
+		        ),
+		
+		    'cover' => Array
+		        (
+		            0 => Array
+		                (
+		                    'name' => '主图011-2.jpg',
+		                    'type' => 'image/jpeg',
+		                    'tmp_name' => 'F:\xampp\tmp\phpDE6B.tmp',
+		                    'error' => '0',
+		                    'size' => '122483'
+		                )
+		
+		        )
+		
+		);
 		//echo $i->upload($_FILES['img_url']);
 		echo '<pre>';
-		//var_dump(imagecreatefromjpeg(ENTRY_PATH . '\uploads\201705\149475431417.jpg'));
-		print_r($i::addWaterMark(ENTRY_PATH . '\images\201705\149475431417.jpg'));
+		print_r($i::uploadFileBatch($f));
 		exit;
 		//*/
 		

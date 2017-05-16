@@ -92,15 +92,67 @@ class Upload
 	
 	/**
 	 * 批量上传
+	 * @param: $files        array        $_FILES 或者形如array('key'=>array(array('name'=>'','type'=>'','tmp_name'=>'','error'=>'','size'=>'')))的数组
+	 * @param: $addWater     boolean      是否添加水印
+	 * @param: $mkThumb      boolean      是否生成缩略图
+	 * @param: $mixed        string       缩略图宽度或宽度数组、宽高数组
+	 * @param: $isSquare     boolean      缩略图是否为正方形
+	 * @param: $quality      number       质量
 	 */
-	public static function uploadFileBatch($files)
+	public static function uploadFileBatch($files, $addWater = false, $mkThumb = false, $mixed = '', $isSquare = false, $quality = 0)
 	{
-		
+		$realFiles = array();
+		foreach($files as $k => $v)
+		{
+			// 处理直接传入$_FILES的情况
+			if(isset($v['name']))
+			{
+				if(is_array($v['name']))
+				{
+					foreach($v['name'] as $kk => $vv)
+					{
+						$realFiles[$k][] = array(
+							'name'		=> $vv,
+							'type'		=> $files[$k]['type'][$kk],
+							'tmp_name'	=> $files[$k]['tmp_name'][$kk],
+							'error'		=> $files[$k]['error'][$kk],
+							'size'		=> $files[$k]['size'][$kk]
+						);
+					}
+				}
+				else
+				{
+					$realFiles[$k][] = $v;
+				}
+			}
+			// 直接转换一下
+			else
+			{
+				$realFiles[$k] = $v;
+			}
+		}
+		// 处理批量上传
+		$uploadResult = array();
+		foreach($realFiles as $k => $v)
+		{
+			foreach($v as $vv)
+			{
+				$uploadResult[$k][] = uploadFile($vv, $addWater, $mkThumb, $mixed, $isSquare, $quality);
+			}
+		}
+		return $uploadResult;
 	}
 	
-	// // $_FILES 包含的关联索引 name、type、tmp_name、error、size
-	// 处理文件上传
-	public static function uploadFile($file)
+	/**
+	 * 处理文件上传
+	 * @param: $file         array        包含name、type、tmp_name、error、size的数组
+	 * @param: $addWater     boolean      是否添加水印
+	 * @param: $mkThumb      boolean      是否生成缩略图
+	 * @param: $mixed        string       缩略图宽度或宽度数组、宽高数组
+	 * @param: $isSquare     boolean      缩略图是否为正方形
+	 * @param: $quality      number       质量
+	 */
+	public static function uploadFile($file, $addWater = false, $mkThumb = false, $mixed = '', $isSquare = false, $quality = 0)
 	{
 		// 检查是否存在错误
 		if($file['error'])
@@ -121,7 +173,7 @@ class Upload
 			self::$error = '文件过大！';
 			return false;
 		}
-		// 建立以年月命名的文件夹
+		// 在uploads下建立以年月命名的文件夹
 		$newUploadsDir = self::mkNewDir(self::$uploadsDir);
 		// 生成文件名
 		$fileName = self::uniqueName($newUploadsDir, self::getSuffix($file['name']));
@@ -129,7 +181,30 @@ class Upload
 		if(move_uploaded_file($file['tmp_name'], $fileName))
 		{
 			@chmod($fileName,0755);
-			return $fileName;
+			// 判断上传文件是否为图片，并作后续处理
+			if(self::isType($file['type'], 'image'))
+			{
+				// 在images下建立以年月命名的文件夹
+				$newImagesDir = self::mkNewDir(self::$imagesDir);
+				$newFileName = $newImagesDir . basename($fileName);
+				// 复制图片到文件夹中
+				copy($fileName, $newFileName);
+				// 添加水印
+				if($addWater)
+				{
+					self::addWaterMark($newFileName, $quality);
+				}
+				if($mkThumb)
+				{
+					self::mkThumbBatch($newFileName, $mixed, $isSquare, $quality);
+				}
+				return $newFileName;
+			}
+			// TODO 这里增加对其他文件类型的判断以及处理
+			else
+			{
+				return $fileName;
+			}
 		}
 		else
 		{
@@ -144,7 +219,7 @@ class Upload
 	 * @param: $isSquare     boolean      缩略图是否为正方形
 	 * @param: $quality      number       质量
 	 */
-	private static function mkThumbBatch($fileName, $mixed = '', $isSquare = 0, $quality = '')
+	private static function mkThumbBatch($fileName, $mixed = '', $isSquare = false, $quality = 0)
 	{
 		// 设置缩略图质量
 		$quality = $quality ? $quality : self::$quality;
@@ -215,7 +290,7 @@ class Upload
 	 * @param: $fileName       string       包含路径的原图文件名
 	 * @param: $quality        number       质量
 	 */
-	private static function addWaterMark($fileName, $quality = '')
+	private static function addWaterMark($fileName, $quality = 0)
 	{
 		// 设置图片输出质量
 		$quality = $quality ? $quality : self::$quality;
@@ -273,40 +348,31 @@ class Upload
 	 * @param: $mixed array 可能仅指定宽；可能由多个宽组成的一维数组；可能由指定宽高组成的二维数组
 	 * @param: $isSquare boolean 是否统一为正方形缩略图（指定宽高时无效）
 	 */
-	private static function getThumbData($imgWidth, $imgHeight, $mixed = '', $isSquare = 0)
+	private static function getThumbData($imgWidth, $imgHeight, $mixed = '', $isSquare = false)
 	{
-		$mixed = empty($mixed) ? self::$thumbSize : $mixed;
+		// 0为保留原始尺寸
+		$mixed = !empty($mixed) || $mixed === 0 ? $mixed : self::$thumbSize;
+		$mixed = is_array($mixed) ? $mixed : array($mixed);
 		// 计算图像宽高比
 		$ratio = $imgWidth / $imgHeight;
 		// 创建一个二维数组以保存统一的数据
 		// 每个子数组元素为：0宽、1高
 		$realData = array();
-		if(is_array($mixed))
+		// 处理宽度小于0以及可能出现的无法确定高度的情况
+		foreach($mixed as $v)
 		{
-			// 由指定宽高组成的二维数组
-			if(is_array(reset($mixed)))
-			{
-				// 处理可能出现的无法确定高度的情况
-				foreach($mixed as $v)
-				{
-					$realData[] = isset($v[1]) && $v[1] > 0 ? $v : array($v[0], $isSquare ? $v[0] : $v[0] / $ratio);
-				}
-			}
-			// 由多个宽组成的一维数组
-			else
-			{
-				foreach($mixed as $v)
-				{
-					$realData[] = array($v, $isSquare ? $v : $v / $ratio);
-				}
-			}
-		}
-		// 仅指定宽
-		else
-		{
-			$realData[] = array($mixed, $isSquare ? $mixed : $mixed / $ratio);
+			$realData[] = self::getWH($imgWidth, $v, $ratio, $isSquare);
 		}
 		return $realData;
+	}
+	
+	// 修正宽高
+	private static function getWH($ow, $m, $ratio, $isSquare)
+	{
+		$m = is_array($m) ? $m : array($m);
+		$tmpW = $m[0] > 0 ? $m[0] : $ow;
+		$tmpH = isset($m[1]) && $m[1] > 0 ? $m[1] : ($isSquare ? $tmpW : $tmpW / $ratio);
+		return array($tmpW, $tmpH);
 	}
 	
 	// 获取源图像连接资源

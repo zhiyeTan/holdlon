@@ -12,7 +12,9 @@
 				</li>
 				<li class="rpm-form-row-full">
 					<label>封面图片</label>
-					<input class="rpm-file-input" type="file" name="img_url" value="">
+					<input class="rpm-file-input" type="file" name="imgurl[]" value="">
+					<input class="rpm-file-input" type="file" name="imgurl[]" value="">
+					<input class="rpm-file-input" type="file" name="cover" value="">
 					<?php if(isset($data['imgurl']) && $data['imgurl']){ ?>
 					<a href="<?php echo $data['imgurl']; ?>" target="_blank"><i class="dashicons dashicons-icon-yes"></i></a>
 					<?php }else{ ?>
