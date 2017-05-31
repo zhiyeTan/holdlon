@@ -6,16 +6,21 @@
 		<tbody>
 			<tr>
 				<th>文章标题</th>
+				<th>所属分类</th>
 				<th>文章状态</th>
 				<th>操作</th>
 			</tr>
+			<?php foreach($data['list'] as $v) { ?>
 			<tr class="rpm-table-single-row">
-				<td>{$l.cat_name}</td>
-				<td><i class="dashicons dashicons-icon-{if $l.is_hot}yes{else}no{/if}"></i></td>
+				<td style="text-align: left;"><?php echo $v['title']; ?></td>
+				<td><?php echo $v['name']; ?></td>
+				<td><?php echo $v['status']; ?></td>
 				<td class="rpm-text-align-left">
-					<a class="rpm-handle_btn" href="#" title="删除"><i class="iconfont icon-handle-btn-del"></i></a>
+					<a class="rpm-handle_btn" href="<?php echo $v['urlEdit']; ?>" title="修改"><i class="iconfont icon-handle-btn-edt"></i></a>
+					<a class="rpm-handle_btn" href="<?php echo $v['urlDelete']; ?>" title="删除"><i class="iconfont icon-handle-btn-del"></i></a>
 				</td>
 			</tr>
+			<?php } ?>
 		</tbody>
 	</table>
 </div>

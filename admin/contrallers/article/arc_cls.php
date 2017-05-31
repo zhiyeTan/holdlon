@@ -37,34 +37,25 @@ class arc_cls extends \admin\adminContraller
 					// 获取数据
 					$newData = $model;
 					unset($newData['token']);
+					// 转换HTML实体
+					$newData['content'] = htmlspecialchars($newData['content']);
 					$imgs = upload::uploadFileBatch($_FILES, true, true);
 					$newData['imgurl'] = $imgs['imgurl'][0];
 					if($arcc->add($newData))
 					{
-						$successUrlData = array(
-							'e' => $_GET['e'],
-							'm' => 'index',
-							'c' => 'tips',
-							'a' => 'success'
-						);
-						zHeader(router::create($successUrlData));
+						zHeader(self::tipsUrl());
 					}
 				}
 				else
 				{
 					// TODO 验证失败
+					zHeader(self::tipsUrl(1));
 				}
 			}
 			else
 			{
 				// 这里是重复提交了
-				$repeatUrlData = array(
-					'e' => $_GET['e'],
-					'm' => 'index',
-					'c' => 'tips',
-					'a' => 'repeat'
-				);
-				zHeader(router::create($repeatUrlData));
+				zHeader(self::tipsUrl(2));
 			}
 		}
 		else
@@ -98,6 +89,8 @@ class arc_cls extends \admin\adminContraller
 					// 获取数据
 					$newData = $model;
 					unset($newData['token'], $newData['imgurl']);
+					// 转换HTML实体
+					$newData['content'] = htmlspecialchars($newData['content']);
 					if(!empty($_FILES['imgurl']))
 					{
 						$imgs = upload::uploadFileBatch($_FILES, true, true);
@@ -106,26 +99,18 @@ class arc_cls extends \admin\adminContraller
 					// TODO 处理图片上传，并把路径加入到数据数组中
 					if($arcc->edit($_GET['id'], $newData))
 					{
-						$successUrlData = array(
-							'e' => $_GET['e'],
-							'm' => 'index',
-							'c' => 'tips',
-							'a' => 'success'
-						);
-						zHeader(router::create($successUrlData));
+						zHeader(self::tipsUrl());
 					}
+				}
+				else
+				{
+					zHeader(self::tipsUrl(1));
 				}
 			}
 			else
 			{
 				// 这里是重复提交了
-				$repeatUrlData = array(
-					'e' => $_GET['e'],
-					'm' => 'index',
-					'c' => 'tips',
-					'a' => 'repeat'
-				);
-				zHeader(router::create($repeatUrlData));
+				zHeader(self::tipsUrl(2));
 			}
 		}
 		else

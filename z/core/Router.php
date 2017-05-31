@@ -182,7 +182,6 @@ class Router
 		$queryString = strtr($_SERVER['QUERY_STRING'], array('.'=>'@@'));
 		// 修正s参数为e参数
 		$queryString = strtr($queryString, array('s='=>'e='));
-		
 		// 把URL参数处理成数组
 		if($queryString)
 		{

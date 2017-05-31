@@ -74,7 +74,7 @@ CREATE TABLE `z_arc_status` (
 `cat_id` smallint(5) UNSIGNED NOT NULL DEFAULT 0 COMMENT '文章分类id',
 `user_id` mediumint(8) UNSIGNED NOT NULL DEFAULT 0 COMMENT '用户id',
 `hasimg` tinyint(1) UNSIGNED NOT NULL DEFAULT 0 COMMENT '是否有封面（0否、1是）',
-`status` tinyint(1) UNSIGNED NOT NULL DEFAULT 1 COMMENT '状态（0软删除、1不显示、2显示）',
+`status` tinyint(1) UNSIGNED NOT NULL DEFAULT 0 COMMENT '状态（0隐藏、1显示、2软删除）',
 `comment` tinyint(1) UNSIGNED NOT NULL DEFAULT 0 COMMENT '评论状态（0不可评论、1可评论）',
 `is_new` tinyint(1) UNSIGNED NOT NULL DEFAULT 0 COMMENT '是否最新（0否1是）',
 `is_hot` tinyint(1) UNSIGNED NOT NULL DEFAULT 0 COMMENT '是否热门（0否1是）',

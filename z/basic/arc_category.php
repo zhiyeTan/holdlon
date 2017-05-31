@@ -81,7 +81,7 @@ class arc_category
 		return self::$db->field('status')->data(2)->where(array('id', '=', $id))->update();
 	}
 	
-	// 真是删除
+	// 真实删除
 	public function realDelete($id)
 	{
 		return self::$db->where(array('id', '=', $id))->delete();

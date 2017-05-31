@@ -2,8 +2,9 @@
 
 namespace admin;
 
-use z\core\Session as Session;
-use z\core\Router as Router;
+use z\core\Session as session;
+use z\core\Router as router;
+use z\core\Validate as validate;
 
 class adminContraller extends \z\core\Contraller
 {
@@ -20,7 +21,7 @@ class adminContraller extends \z\core\Contraller
 	protected static function chkLogin()
 	{
 		// 登录状态
-		$status = Session::get('loginStatus');
+		$status = session::get('loginStatus');
 		// 若不是登录状态或cookie未保存有session_name
 		if(!$status)
 		{
@@ -30,7 +31,7 @@ class adminContraller extends \z\core\Contraller
 				'c' => 'index',
 				'a' => 'login',
 			);
-			$url = Router::create($urldata);
+			$url = router::create($urldata);
 			zHeader($url);
 			exit(0);
 		}
@@ -81,5 +82,17 @@ class adminContraller extends \z\core\Contraller
 	{
 		self::chkLogin();
 		self::chkPermission();
+	}
+	
+	// 统一的提示URL
+	protected static function tipsUrl($type = 0)
+	{
+		$UrlData = array(
+			'e' => $_GET['e'],
+			'm' => 'index',
+			'c' => 'tips'
+		);
+		$UrlData['a'] = $type ? ($type == 1 ? 'fail' : 'repeat') : 'success';
+		return router::create($UrlData);
 	}
 }

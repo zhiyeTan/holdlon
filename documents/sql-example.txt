@@ -17,6 +17,7 @@ field的几种设置方法：
 
 V5.0+：
 ->field('id')
+->field('a.id')
 ->field(array('account', 'password'))
 ->field(array('account'=>'count'))
 ->field(array('account'=>'a', 'id'=>'max'))
@@ -26,6 +27,7 @@ V5.0+：
 
 V5.4+：
 ->field('id')
+->field('a.id')
 ->field(['account', 'password'])
 ->field(['account'=>'count'])
 ->field(['account'=>'a', 'id'=>'max'])

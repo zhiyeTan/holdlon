@@ -181,21 +181,18 @@ class Model
 	 */
 	public static function join($array)
 	{
-		$joinRule = array('inner', 'left', 'right', 'INNER', 'LEFT', 'RIGHT');
-		if(is_array($array))
+		$joinRule = array('inner', 'left', 'right', 'and', 'INNER', 'LEFT', 'RIGHT', 'AND');
+		// 0联表方式、1表名、2别名、3条件[字段, 字段]
+		if(is_array($array) && in_array($array[0], $joinRule) && !empty($array[1]) && !empty($array[3]))
 		{
-			foreach($array as $v)
+			// 修正表名
+			$array[1] = '`' . self::$prefix . $array[1] . '`';
+			// 修正条件部分
+			if(!is_array(reset($array[3])))
 			{
-				// 0联表方式、1表名、2别名、3条件[字段, 字段]
-				if(is_array($v) && in_array($v[0], $joinRule) && !empty($v[1]) && !empty($v[3]))
-				{
-					if(!is_array(reset($v[3])))
-					{
-						$v[3] = array($v[3]);
-					}
-					self::$join[] = $v;
-				}
+				$array[3] = array($array[3]);
 			}
+			self::$join[] = $array;
 		}
 		return self::$_instance;
 	}
@@ -226,10 +223,20 @@ class Model
 		// 二维数组且长度大于2，即字段名、操作符、值是必须的，以及操作符的合法性
 		if(is_array($arr) && count($arr) > 2 && in_array($arr[1], $actionRule))
 		{
+			// 修正字段名
+			if(strpos($arr[0], '.') !== false)
+			{
+				$tmp = explode('.', $arr[0]);
+				$arr[0] = $tmp[0] . '.`' . $tmp[1] . '`';
+			}
+			else
+			{
+				$arr[0] = '`' . $arr[0] . '`';
+			}
 			// 修正操作符为大写标准
 			$arr[1] = strtoupper($arr[1]);
 			// 修正字符串类型的值
-			$arr[2] = is_string($arr[2]) ? "'" . $arr[2] . "'" : $arr[2];
+			$arr[2] = is_numeric($arr[2]) ? $arr[2] : "'" . $arr[2] . "'";
 			// 修正逻辑部分
 			$arr[3] = isset($arr[3]) ? strtoupper($arr[3]) : '';
 			$arr[3] = strtr($arr[3], array('||'=>'OR','&&'=>'AND'));
@@ -377,9 +384,19 @@ class Model
 		$str = '';
 		foreach(self::$field as $v)
 		{
-			// 0字段名、1操作名、2别名
-			$v[0] = $v[0] === '*' ? $v[0] : '`' . $v[0] . '`';
+			// 修正字段名
+			if(strpos($v[0], '.') !== false)
+			{
+				$tmp = explode('.', $v[0]);
+				$v[0] = $tmp[0] . '.' . ($tmp[1] !== '*' ? '`' . $tmp[1] . '`' : $tmp[1]);
+			}
+			elseif($v[0] !== '*')
+			{
+				$v[0] = '`' . $v[0] . '`';
+			}
+			// 修正操作名
 			$str .= empty($v[1]) ? $v[0] : strtoupper($v[1]) . '(' . $v[0] . ')';
+			// 修正别名
 			$str .= empty($v[2]) ? ',' : ' AS ' . $v[2] . ',';
 		}
 		return rtrim($str, ',');
@@ -430,7 +447,7 @@ class Model
 			{
 				if($v)
 				{
-					$str .= '`' . $v[0] . '` ' . $v[1] . ' ' . $v[2] . ' ' . $v[3] . ' ';
+					$str .= $v[0] . ' ' . $v[1] . ' ' . $v[2] . ' ' . $v[3] . ' ';
 				}
 			}
 			// 去掉可能存在的多余的与或逻辑
@@ -460,7 +477,7 @@ class Model
 			{
 				// 处理数据
 				$data = !empty($v[$kk]) ? $v[$kk] : '\'\'';
-				if(!empty($data) && preg_match('/[\+\-\*\/\!\%]/', $data))
+				if(!empty($data) && self::chkOperation($data))
 				{
 					$data = '`' . $vv[0] . '`' . trim($data, ',');
 				}
@@ -468,6 +485,12 @@ class Model
 			}
 		}
 		return rtrim($str, ',');
+	}
+	
+	// 判断是否带运算符
+	private static function chkOperation($str)
+	{
+		return strpos($str, '+') === 0 || strpos($str, '-') === 0 || strpos($str, '*') === 0 || strpos($str, '/') === 0 || strpos($str, '%') === 0 ? true : false;
 	}
 	
 	// 拼接分组
@@ -541,15 +564,9 @@ class Model
 	 */
 	public static function select()
 	{
-		if(!empty(self::$from) && !empty(self::$join))
-		{
-			$sql = 'SELECT ' . self::fieldToStr() . ' FROM ' . self::fromToStr() . self::joinToStr();
-		}
-		else
-		{
-			$sql = 'SELECT ' . self::fieldToStr() . ' FROM ' . self::tableToStr();
-		}
-		$sql .= self::whereToStr() . self::groupToStr() . self::orderToStr() . self::limitToStr();
+		// 支持联表查询
+		$fragment = !empty(self::$from) && !empty(self::$join) ? self::fromToStr() . self::joinToStr() : self::tableToStr();
+		$sql = 'SELECT ' . self::fieldToStr() . ' FROM ' . $fragment . self::whereToStr() . self::groupToStr() . self::orderToStr() . self::limitToStr();
 		return self::query($sql);
 	}
 	
@@ -559,7 +576,16 @@ class Model
 	public static function insert()
 	{
 		$sql = 'INSERT INTO ' . self::tableToStr() . '(' . self::fieldToStr() . ') VALUES ' . self::insertDataToStr();
-		return self::query($sql);
+		if(self::query($sql))
+		{
+			$tmpId = self::$conn->insert_id;
+			// 某些表不存在自增ID的情况下返回true
+			return $tmpId ? $tmpId : true;
+		}
+		else
+		{
+			return false;
+		}
 	}
 	
 	/**
@@ -576,7 +602,10 @@ class Model
 	 */
 	public static function delete()
 	{
-		$sql = 'DELETE FROM ' . self::tableToStr() . self::whereToStr();
+		// 支持联表删除
+		$fragment1 = !empty(self::$from) && !empty(self::$join) ? self::fieldToStr() : '';
+		$fragment2 = !empty(self::$from) && !empty(self::$join) ? self::fromToStr() . self::joinToStr() : self::tableToStr();
+		$sql = 'DELETE ' . $fragment1 . ' FROM ' . $fragment2 . self::whereToStr();
 		return self::query($sql);
 	}
 	
@@ -710,15 +739,6 @@ class Model
 	public static function sum($field)
 	{
 		return self::gether('sum', $field);
-	}
-	
-	/**
-	 * 取得上一个INSERT操作产生的ID
-	 * @return: number
-	 */
-	public static function getInsertId()
-	{
-		return self::$conn->insert_id();
 	}
 	
 	// 调试查询语句

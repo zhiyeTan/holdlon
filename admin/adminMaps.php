@@ -71,6 +71,30 @@ $maps['lk'] = array(
 	'list'		=> array()
 );
 
+$maps['lk']['list']['link_list'] = array(
+	'name'		=> '友链列表',
+	'display'	=>1,
+	'url'		=>Router::create(array('e'=>$_GET['e'], 'm'=>'link', 'c'=>'link', 'a'=>'link_list'))
+);
+
+$maps['lk']['list']['link_add'] = array(
+	'name'		=> '添加友链',
+	'display'	=>1,
+	'url'		=>Router::create(array('e'=>$_GET['e'], 'm'=>'link', 'c'=>'link', 'a'=>'link_add'))
+);
+
+$maps['lk']['list']['link_edit'] = array(
+	'name'		=> '修改友链',
+	'display'	=>0,
+	'url'		=>Router::create(array('e'=>$_GET['e'], 'm'=>'link', 'c'=>'link', 'a'=>'link_edit'))
+);
+
+$maps['lk']['list']['link_delete'] = array(
+	'name'		=> '删除友链',
+	'display'	=>0,
+	'url'		=>Router::create(array('e'=>$_GET['e'], 'm'=>'link', 'c'=>'link', 'a'=>'link_delete'))
+);
+
 
 // 权限管理
 $maps['p'] = array(
