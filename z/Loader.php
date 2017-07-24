@@ -2,43 +2,54 @@
 
 namespace z;
 
+/**
+ * 自动加载类文件
+ * 
+ * 与命名空间配合实现自动加载类名对应的文件
+ * 
+ * @author 谈治烨<594557148@qq.com>
+ * @copyright 使用或改进本代码请注明原作者
+ * 
+ */
 class Loader
 {
-	// 类名映射
-	public static $classMap = array();	
-	// 数据库配置
-	public static $dbconfig = array();
-	// 数据库配置的键名
+	/**
+	 * 数据库配置
+	 */ 
+	public static $dbconfig;
+	/**
+	 * 数据库配置的键名
+	 */
 	public static $dbcfgkey = array('server', 'username', 'password', 'dbname', 'charset', 'port', 'prefix');
 	
-	// 基本设置
+	/**
+	 * 设置基础常量以及数据库配置和时区
+	 */
 	public static function setup()
 	{
 		// 初始时间和内存
 		define('Z_BEGIN_TIME', microtime(true));
 		define('Z_BEGIN_MEM', memory_get_usage());
-		// 路径
-		define('Z_PATH', __DIR__);
-		define('LOAD_PATH', dirname(Z_PATH) . Z_DS);
 		
-		$main = require Z_PATH . Z_DS . 'config' . Z_DS . 'config.php';
-		$local = require Z_PATH . Z_DS . 'config' . Z_DS . '/config_local.php';
+		// 加载配置
+		$main = require UNIFIED_PATH . 'z' . Z_DS . 'config' . Z_DS . 'config.php';
+		$local = require UNIFIED_PATH . 'z' . Z_DS . 'config' . Z_DS . '/config_local.php';
 		$CFG = array_merge($main, $local);
 		
 		// 调试模式
 		define('Z_DEBUG', $CFG['app_debug']);
-		// 多点部署
-		define('MULTIPOINT_ENABLE', $CFG['multipoint_enable']);
-		// 静态目录
-		define('STATIC_PATH', $CFG['static_path']);
-		// 静态主机名
-		define('STATIC_DOMAIN', $CFG['static_domain']);
 		// 异步处理主机名
 		define('ASYNC_DOMAIN', $CFG['async_domain']);
 		// 异步处理端口
 		define('ASYNC_PORT', $CFG['async_port']);
-		// 服务器缓存有效时间
-		define('CACHE_EXPIRE', (int) $CFG['cache_expire']);
+		// 数据接口入口名
+		define('API_ENTRY', $CFG['api_entry']);
+		// 数据接口入口对应的应用目录名
+		define('API_DIR', $CFG['api_dir']);
+		// 服务器数据缓存有效时间
+		define('DATA_CACHE_EXPIRE', (int) $CFG['data_cache_expire']);
+		// 服务器静态缓存有效时间
+		define('STATIC_CACHE_EXPIRE', (int) $CFG['static_cache_expire']);
 		// 本地缓存有效时间
 		define('LOCAL_EXPIRE', (int) $CFG['local_expire']);
 		// 路由设置
@@ -71,18 +82,16 @@ class Loader
 		date_default_timezone_set($CFG['default_timezone']);
 	}
 	
-	// 自动加载
+	/**
+	 * 自动加载类名文件
+	 * 结合命名空间使用
+	 */
 	public static function autoload($className)
 	{
-		// 检查是否存在类名地图中
-		if(isset(static::$classMap[$className]))
-		{
-			$classFile = static::$classMap[$className];
-		}
 		// 检查类名是否包含"\"
-		elseif(strpos($className, '\\') !== false)
+		if(strpos($className, '\\') !== false)
 		{
-			$classFile = (strpos($className, 'z') === false ? APP_PATH : LOAD_PATH) . strtr($className, array('\\'=>Z_DS)) . '.php';
+			$classFile = (strpos($className, 'z') === false ? APP_PATH : UNIFIED_PATH) . strtr($className, array('\\'=>Z_DS)) . '.php';
 			if(!is_file($classFile))
 			{
 				return;

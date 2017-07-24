@@ -2,28 +2,36 @@
 
 namespace z\core;
 
+use z\lib\Core as Core;
+
+/**
+ * 日志类
+ * 
+ * @author 谈治烨<594557148@qq.com>
+ * @copyright 使用或改进本代码请注明原作者
+ * 
+ */
 class Log
 {
 	private static $path;
 	private static $maxSize;
-	// 保存例实例在此属性中
 	private static $_instance;
 	
-	// 构造函数声明为private,防止直接创建对象
+	// 禁止直接创建对象
 	private function __construct()
 	{
-		self::$path = APP_PATH . 'log' . Z_DS;
-		// 设置日志大小上限为2m
-		self::$maxSize = 2097152;
+		self::$path = APP_PATH . 'logs' . Z_DS;
+		// 设置日志大小上限（单位字节）
+		self::$maxSize = 1000000;
 		// log文件夹不存在则创建并赋值权限
-		if(!is_dir(self::$path))
-		{
-			mkdir(self::$path);
-			chmod(self::$path, 0777);
-		}
+		Core::chkFolder(self::$path);
 	}
 	
-	// 单例方法，初始化对象
+	/**
+	 * 单例构造方法
+	 * @access public
+	 * @return this
+	 */
 	public static function init()
 	{
 		if(!isset(self::$_instance))
@@ -34,7 +42,9 @@ class Log
 		return self::$_instance;
 	}
 	
-	// 阻止用户复制对象实例
+	/**
+	 * 禁止用户复制对象实例
+	 */
 	public function __clone()
 	{
 		trigger_error('Clone is not allow' , E_USER_ERROR);
@@ -42,8 +52,10 @@ class Log
 	
 	/**
 	 * 保存日志
-	 * @param: string $name 日志文件名
-	 * @param: string $content 单条日志的内容
+	 * @access public
+	 * @param  string  $name     日志文件名
+	 * @param  string  $content  单条日志的内容
+	 * @return boolean
 	 */
 	public static function save($name, $content)
 	{
@@ -68,13 +80,7 @@ class Log
 			}
 			while(!$status && $i < $domax);
 		}
-		// 打开
-		$file = fopen($filename, "ab");
-		if(flock($file, LOCK_EX))
-		{
-			fwrite($file, $content.PHP_EOL);
-			flock($file, LOCK_UN);
-			fclose($file);
-		}
+		// 保存日志
+		return Core::writeFile($filename, $content.PHP_EOL, false, true, false);
 	}
 }

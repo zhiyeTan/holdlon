@@ -2,17 +2,23 @@
 
 namespace z\core;
 
-use z\core\Session as session;
+use z\core\Session as Session;
 
+/**
+ * 验证机制
+ * 
+ * @author 谈治烨<594557148@qq.com>
+ * @copyright 使用或改进本代码请注明原作者
+ * 
+ */
 class Validate
 {
-	
 	/**
 	 * 验证字段值是否为有效格式
-	 * @access protected
-	 * @param string    $rule   验证规则
-	 * @param mixed     $value  字段值
-	 * @return bool
+	 * @access public
+	 * @param  string   $rule   验证规则
+	 * @param  mixed    $value  字段值
+	 * @return boolean
 	 */
 	public static function is($rule, $value = null)
 	{
@@ -106,8 +112,8 @@ class Validate
 	/**
 	 * 使用正则验证数据
 	 * @access protected
-	 * @param mixed     $value  字段值
-	 * @param mixed     $rule  验证规则 正则规则或者预定义正则名
+	 * @param  mixed      $value  字段值
+	 * @param  mixed      $rule   验证规则 正则规则或者预定义正则名
 	 * @return mixed
 	 */
 	protected static function regex($value, $rule)
@@ -123,9 +129,9 @@ class Validate
 	/**
 	 * 使用filter_var方式验证
 	 * @access protected
-	 * @param mixed     $value  字段值
-	 * @param mixed     $rule  验证规则
-	 * @return bool
+	 * @param  mixed      $value  字段值
+	 * @param  mixed      $rule   验证规则
+	 * @return boolean
 	 */
 	protected static function filter($value, $rule)
 	{
@@ -144,10 +150,14 @@ class Validate
 		return false !== filter_var($value, is_int($rule) ? $rule : filter_id($rule), $param);
 	}
 	
-	// 验证表单令牌
+	/**
+	 * 验证表单令牌
+	 * @access protected
+	 * @return boolean
+	 */
 	protected static function token()
 	{
-		$token = session::get('__token__');
+		$token = Session::get('__token__');
 		if(!$token)
 		{
 			// 令牌无效
@@ -156,15 +166,19 @@ class Validate
 		if($token === $_POST['form']['token'])
 		{
 			// 验证完成即销毁，防止重复提交
-			session::delete('__token__');
+			Session::delete('__token__');
 			return true;
 		}
 		// 重置令牌
-		session::delete('__token__');
+		Session::delete('__token__');
 		return false;
 	}
 	
-	// 验证是否标准表单提交
+	/**
+	 * 验证是否标准表单提交
+	 * @access protected
+	 * @return boolean
+	 */
 	protected static function form()
 	{
 		if(isset($_POST['form']))
@@ -174,7 +188,11 @@ class Validate
 		return false;
 	}
 	
-	// 验证表单是否包含令牌
+	/**
+	 * 验证表单是否包含令牌
+	 * @access protected
+	 * @return boolean
+	 */
 	protected static function hasToken()
 	{
 		if(isset($_POST['form']['token']))

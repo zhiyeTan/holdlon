@@ -2,6 +2,15 @@
 
 namespace z\core;
 
+use z\lib\Core as Core;
+
+/**
+ * 上传管理
+ * 
+ * @author 谈治烨<594557148@qq.com>
+ * @copyright 使用或改进本代码请注明原作者
+ * 
+ */
 class Upload
 {
 	private static $error;
@@ -9,7 +18,6 @@ class Upload
 	private static $uploadsDir = ENTRY_PATH . Z_DS . 'uploads' . Z_DS;
 	private static $imagesDir = ENTRY_PATH . Z_DS . 'images' . Z_DS;
 	private static $waterMark = ENTRY_PATH . Z_DS . 'images' . Z_DS . 'watermark.png';
-	private static $fontMark = '字体水印示例';
 	private static $fontSize = 20; // 单位px
 	private static $fontColor = array(255, 255, 255); // rgb颜色
 	private static $waterMarkPlace = 1;
@@ -17,13 +25,19 @@ class Upload
 	private static $thumbSize = array(320, 375, 425, 480, 640, 768);
 	private static $quality = 100;
 	private static $_instance;
-
+	
+	// 禁止直接创建对象
     private function __construct()
     {
-		self::chkDir(self::$uploadsDir);
-		self::chkDir(self::$imagesDir);
+    	Core::chkFolder(self::$uploadsDir);
+		Core::chkFolder(self::$imagesDir);
     }
 	
+	/**
+	 * 单例构造方法
+	 * @access public
+	 * @return this
+	 */
 	public static function init()
 	{
 		if(!isset(self::$_instance))
@@ -34,37 +48,57 @@ class Upload
 		return self::$_instance;
 	}
 	
-	// 检查目录
-	private static function chkDir($dir)
+	/**
+	 * 禁止用户复制对象实例
+	 */
+	public function __clone()
 	{
-		if(!is_dir($dir))
-		{
-			mkdir($dir);
-			chmod($dir, 0777);
-		}
+		trigger_error('Clone is not allow' , E_USER_ERROR);
 	}
 	
-	// 生成以年月命名的文件
+	/**
+	 * 生成以年月命名的文件
+	 * @access private
+	 * @param  path     $dirPrefix  路径前缀
+	 * @return path
+	 */
 	private static function mkNewDir($dirPrefix)
 	{
 		$dir = $dirPrefix . date('Ym') . Z_DS;
-		self::chkDir($dir);
+		Core::chkFolder($dir);
 		return $dir;
 	}
 	
-	// 检查文件类型
+	/**
+	 * 检查文件类型
+	 * @access public
+	 * @param  string  $fileType  文件类型
+	 * @param  string  $type      类型标识
+	 * @return boolean
+	 */
 	public static function isType($fileType, $type)
 	{
 		return stripos($fileType, $type) === false ? false : true;
 	}
 	
-	// 检查文件大小
+	/**
+	 * 检查文件大小
+	 * @access public
+	 * @param  number  $fileSzie  文件大小（单位字节）
+	 * @return boolean
+	 */
 	public static function chkSize($fileSzie)
 	{
 		return self::$maxSize*1048576 > $fileSzie ? true : false;
 	}
 	
-	// 生成一定格式的唯一文件名
+	/**
+	 * 生成一定格式的唯一文件名
+	 * @access public
+	 * @param  path    $dir     路径
+	 * @param  string  $suffix  后缀名
+	 * @return boolean
+	 */
 	private static function uniqueName($dir, $suffix)
 	{
 		$fileName = '';
@@ -76,21 +110,34 @@ class Upload
 		return $fileName;
 	}
 	
-	// 获取文件后缀名
+	/**
+	 * 获取文件后缀名
+	 * @access public
+	 * @param  path    $fileName   文件路径
+	 * @return string
+	 */
 	private static function getSuffix($fileName)
 	{
 		$pos = strripos($fileName, '.');
 		return $pos !== false ? substr($fileName, $pos + 1) : '';
 	}
 	
-	// 获取不含后缀名的文件名
+	/**
+	 * 获取不含后缀名的文件名
+	 * @access public
+	 * @param  path    $fileName  文件路径
+	 * @return string
+	 */
 	private static function getRealName($fileName)
 	{
 		$res = explode('.', basename($fileName));
 		return $res[0];
 	}
 	
-	// 调试错误
+	/**
+	 * 调试错误
+	 * @access public
+	 */
 	public static function debug()
 	{
 		echo self::$error;
@@ -99,12 +146,18 @@ class Upload
 	
 	/**
 	 * 批量上传
-	 * @param: $files        array        $_FILES 或者形如array('key'=>array(array('name'=>'','type'=>'','tmp_name'=>'','error'=>'','size'=>'')))的数组
-	 * @param: $addWater     boolean      是否添加水印
-	 * @param: $mkThumb      boolean      是否生成缩略图
-	 * @param: $mixed        string       缩略图宽度或宽度数组、宽高数组
-	 * @param: $isSquare     boolean      缩略图是否为正方形
-	 * @param: $quality      number       质量
+	 * 
+	 * 可直接接收$_FILES参数
+	 * 或者形如array('key'=>array(array('name'=>'','type'=>'','tmp_name'=>'','error'=>'','size'=>'')))的数组
+	 * 
+	 * @access public
+	 * @param  $files       array      数组
+	 * @param  $addWater    boolean    是否添加水印
+	 * @param  $mkThumb     boolean    是否生成缩略图
+	 * @param  $mixed       string     缩略图宽度或宽度数组、宽高数组
+	 * @param  $isSquare    boolean    缩略图是否为正方形
+	 * @param  $quality     number     质量
+	 * @return array
 	 */
 	public static function uploadFileBatch($files, $addWater = false, $mkThumb = false, $mixed = '', $isSquare = false, $quality = 0)
 	{
@@ -152,12 +205,14 @@ class Upload
 	
 	/**
 	 * 处理文件上传
-	 * @param: $file         array        包含name、type、tmp_name、error、size的数组
-	 * @param: $addWater     boolean      是否添加水印
-	 * @param: $mkThumb      boolean      是否生成缩略图
-	 * @param: $mixed        string       缩略图宽度或宽度数组、宽高数组
-	 * @param: $isSquare     boolean      缩略图是否为正方形
-	 * @param: $quality      number       质量
+	 * @access public
+	 * @param  $file         array        包含name、type、tmp_name、error、size的数组
+	 * @param  $addWater     boolean      是否添加水印
+	 * @param  $mkThumb      boolean      是否生成缩略图
+	 * @param  $mixed        string       缩略图宽度或宽度数组、宽高数组
+	 * @param  $isSquare     boolean      缩略图是否为正方形
+	 * @param  $quality      number       质量
+	 * @return path/boolean
 	 */
 	private static function uploadFile($file, $addWater = false, $mkThumb = false, $mixed = '', $isSquare = false, $quality = 0)
 	{
@@ -186,10 +241,9 @@ class Upload
 			// 判断上传文件是否为图片，并作后续处理
 			if(self::isType($file['type'], 'image'))
 			{
-				
 				// 使用GD生成一张与原图尺寸一致的质量为100的图片存放在images中
 				// 避免美工没有对图片进行必要压缩而造成图片过大，加载过慢的情况
-				$res = self::mkThumbBatch($fileName, $addWater, $mkThumb, 100);
+				$res = self::mkThumbBatch($fileName, 0, $isSquare, 100);
 				$newFileName = $res[0];
 				@chmod($newFileName,0755);
 				/*
@@ -223,10 +277,12 @@ class Upload
 	
 	/**
 	 * 批量创建缩略图
-	 * @param: $fileName     string       包含路径的原图文件名
-	 * @param: $mixed        string       缩略图宽度或宽度数组、宽高数组
-	 * @param: $isSquare     boolean      缩略图是否为正方形
-	 * @param: $quality      number       质量
+	 * @access public
+	 * @param  $fileName     string       包含路径的原图文件名
+	 * @param  $mixed        string       缩略图宽度或宽度数组、宽高数组
+	 * @param  $isSquare     boolean      缩略图是否为正方形
+	 * @param  $quality      number       质量
+	 * @return array
 	 */
 	private static function mkThumbBatch($fileName, $mixed = '', $isSquare = false, $quality = 0)
 	{
@@ -254,14 +310,16 @@ class Upload
 	
 	/**
 	 * 创建缩略图
-	 * @param: $fileDir       string       存放路径
-	 * @param: $realName      string       源文件名（不含后缀）
-	 * @param: $srcIamge      resource     源图像资源
-	 * @param: $thumbWidth    number       缩略图宽
-	 * @param: $thumbHeight   number       缩略图高
-	 * @param: $imgWidth      number       原图宽
-	 * @param: $imgHeight     number       原图高
-	 * @param: $quality       number       质量
+	 * @access public
+	 * @param  $fileDir       string       存放路径
+	 * @param  $realName      string       源文件名（不含后缀）
+	 * @param  $srcIamge      resource     源图像资源
+	 * @param  $thumbWidth    number       缩略图宽
+	 * @param  $thumbHeight   number       缩略图高
+	 * @param  $imgWidth      number       原图宽
+	 * @param  $imgHeight     number       原图高
+	 * @param  $quality       number       质量
+	 * @return path/boolean
 	 */
 	private function mkThumb($fileDir, $realName, $srcIamge, $thumbWidth, $thumbHeight, $imgWidth, $imgHeight, $quality)
 	{
@@ -297,8 +355,9 @@ class Upload
 	
 	/**
 	 * 添加水印
-	 * @param: $fileName       string       包含路径的原图文件名
-	 * @param: $quality        number       质量
+	 * @access public
+	 * @param  $fileName       string       包含路径的原图文件名
+	 * @param  $quality        number       质量
 	 */
 	private static function addWaterMark($fileName, $quality = 0)
 	{
@@ -353,10 +412,12 @@ class Upload
 	
 	/**
 	 * 统一缩略图调整所需要的数据
-	 * @param: $imgWidth number 原图宽
-	 * @param: $imgHeight number 原图高
-	 * @param: $mixed array 可能仅指定宽；可能由多个宽组成的一维数组；可能由指定宽高组成的二维数组
-	 * @param: $isSquare boolean 是否统一为正方形缩略图（指定宽高时无效）
+	 * @access public
+	 * @param  $imgWidth number 原图宽
+	 * @param  $imgHeight number 原图高
+	 * @param  $mixed array 可能仅指定宽；可能由多个宽组成的一维数组；可能由指定宽高组成的二维数组
+	 * @param  $isSquare boolean 是否统一为正方形缩略图（指定宽高时无效）
+	 * @return array
 	 */
 	private static function getThumbData($imgWidth, $imgHeight, $mixed = '', $isSquare = false)
 	{
@@ -376,7 +437,11 @@ class Upload
 		return $realData;
 	}
 	
-	// 修正宽高
+	/**
+	 * 修正宽高
+	 * @access private
+	 * @return array
+	 */
 	private static function getWH($ow, $m, $ratio, $isSquare)
 	{
 		$m = is_array($m) ? $m : array($m);
@@ -385,7 +450,11 @@ class Upload
 		return array($tmpW, $tmpH);
 	}
 	
-	// 获取源图像连接资源
+	/**
+	 * 获取源图像连接资源
+	 * @access private
+	 * @return path/boolean
+	 */
 	private static function getSrcImage($fileName, $mimeType)
 	{
 		switch ($mimeType)

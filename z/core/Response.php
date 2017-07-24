@@ -2,14 +2,17 @@
 
 namespace z\core;
 
+/**
+ * 响应管理
+ * 
+ * @author 谈治烨<594557148@qq.com>
+ * @copyright 使用或改进本代码请注明原作者
+ * 
+ */
 class Response
 {
 	// 本地缓存时间
 	private static $expire;
-	
-	// 保存例实例在此属性中
-	private static $_instance;
-	
 	// 状态码地图
 	// 常用包括200、301、304、401、404
 	private static $codeMap = array(
@@ -53,7 +56,6 @@ class Response
 		503 => 'HTTP/1.1 503 Service Unavailable',
 		504 => 'HTTP/1.1 504 Gateway Time-out' 
 	);
-	
 	// 内容类型地图
 	private static $contentTypeMap = array(
 		'html'			=> 'Content-Type: text/html; charset=utf-8',
@@ -68,17 +70,17 @@ class Response
 		'xml'			=> 'Content-type: text/xml',
 		'flash'			=> 'Content-Type: application/x-shockw**e-flash'
 	);
-	
 	// 状态码
 	private static $code;
-	
 	// 内容类型
 	private static $contentType;
-	
-	// 动态缓存状态
+	// 静态缓存状态
 	private static $cache;
-	
-	// 构造函数声明为private,防止直接创建对象
+	// 响应内容
+	private static $content;
+	// 保存实例在此属性中
+	private static $_instance;
+	// 禁止直接创建对象
 	private function __construct()
 	{
 		self::$expire = LOCAL_EXPIRE;
@@ -87,7 +89,11 @@ class Response
 		self::$cache = true;
 	}
 	
-	// 单例方法，初始化对象
+	/**
+	 * 单例构造方法
+	 * @access public
+	 * @return this
+	 */
 	public static function init()
 	{
 		if(!isset(self::$_instance))
@@ -98,27 +104,68 @@ class Response
 		return self::$_instance;
 	}
 	
-	// 阻止用户复制对象实例
+	/**
+	 * 禁止用户复制对象实例
+	 */
 	public function __clone()
 	{
 		trigger_error('Clone is not allow' ,E_USER_ERROR);
 	}
 	
-	// 设置本地缓存时间
+	/**
+	 * 设置响应内容
+	 * @access public
+	 * @param  mixed   $content  响应内容
+	 * @return this
+	 */
+	public static function setContent($content)
+	{
+		self::$content = $content;
+		return self::$_instance;
+	}
+	
+	/**
+	 * 获取响应内容
+	 * 此函数主要用来获得接口生成的数据
+	 * @access public
+	 * @param  mixed   $content  响应内容
+	 * @return mixed
+	 */
+	public static function getContent()
+	{
+		return self::$content;
+	}
+	
+	/**
+	 * 设置本地缓存时间
+	 * @access public
+	 * @param  number  $timeStamp  有效时间（单位s）
+	 * @return this
+	 */
 	public static function setExpire($timeStamp)
 	{
 		self::$expire = (int) $timeStamp;
 		return self::$_instance;
 	}
 	
-	// 设置是否使用动态缓存
+	/**
+	 * 设置是否使用静态缓存
+	 * @access public
+	 * @param  boolean  $status  是否使用缓存
+	 * @return this
+	 */
 	public static function setCache($status)
 	{
 		self::$cache = !!$status;
 		return self::$_instance;
 	}
 	
-	// 设置响应状态码
+	/**
+	 * 设置响应状态码
+	 * @access public
+	 * @param  number  $code  状态吗
+	 * @return this
+	 */
 	public static function setCode($code)
 	{
 		if(in_array($code, array_keys(self::$codeMap)))
@@ -128,7 +175,12 @@ class Response
 		return self::$_instance;
 	}
 	
-	// 设置内容类型
+	/**
+	 * 设置内容类型
+	 * @access public
+	 * @param  string  $type  内容类型
+	 * @return this
+	 */
 	public static function setContentType($type)
 	{
 		if(in_array($type, array_keys(self::$contentTypeMap)))
@@ -140,10 +192,9 @@ class Response
 	
 	/**
 	 * 发送数据到客户端
-	 * @param: mixed $data 数据
-	 * @return: mixed
+	 * @access public
 	 */
-	public static function send(&$data)
+	public static function send()
 	{
 		// 检查 HTTP 表头是否已被发送
 		if(!headers_sent())
@@ -156,11 +207,16 @@ class Response
 			header('Expires:' . gmdate('D,d M Y H:i:s',$_SERVER['REQUEST_TIME'] + self::$expire) . ' GMT');
 			header(self::$contentTypeMap[self::$contentType]);
 		}
+		// 格式化JSON再输出
+		if(self::$contentType == 'json')
+		{
+			self::$content = self::formatToJSON(self::$content);
+		}
 		if(200 == self::$code && self::$cache)
 		{
-			Cache::save($data);
+			Cache::save(self::$content);
 		}
-		echo $data;
+		echo self::$content;
 		if(function_exists('fastcgi_finish_request'))
 		{
 			// 提高页面响应
@@ -170,25 +226,18 @@ class Response
 	
 	/**
 	 * 对变量进行 JSON 编码 [不转义中文]
-	 * TODO 当前仅接受 UTF-8 编码的数据
-	 * @param mixed $value 待编码的 value [除了resource 类型之外]
-	 * @return string 返回JSON形式
-	 * 
+	 * 当前仅接受 UTF-8 编码的数据
+	 * @access public
+	 * @param  mixed    $value   待编码的 value [除了resource 类型之外]
+	 * @return josn
 	 */
-	public static function formatToJSON(&$data)
+	public static function formatToJSON($data)
 	{
 		// 兼容5.3，处理编码时不转义中文
 		if(version_compare(PHP_VERSION,'5.4.0','<'))
 		{
 			$json = json_encode($data);
-			$json = preg_replace_callback(
-				'#\\\u([0-9a-f]{4})#i',
-				function($matchs)
-				{
-					return iconv('UCS-2BE', 'UTF-8', pack('H4', $matchs[1]));
-				},
-				$json
-			);
+			$json = preg_replace_callback('#\\\u([0-9a-f]{4})#i', "self::__iconv", $json);
 		}
 		else
 		{
@@ -196,8 +245,17 @@ class Response
 		}
 		// 分别对jsonp和json做处理
 		$json = isset($_GET['callback']) ? (trim($_GET['callback']) . '(' . $json . ')') : $json;
-		// 因为是传址，可直接改变变量
-		$data = $json;
-		unset($json);
+		return $json;
+	}
+	/**
+	 * 将UCS-2BE转换为UTF-8编码
+	 * 防止不同平台出现的UCS-2BE异常
+	 * @access public
+	 * @param  string  $content  内容
+	 * @return string
+	 */
+	private static function __iconv($content)
+	{
+		return iconv('UCS-2BE', 'UTF-8', pack('H4', $content[1]));
 	}
 }

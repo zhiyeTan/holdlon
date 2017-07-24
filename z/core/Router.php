@@ -2,61 +2,68 @@
 
 namespace z\core;
 
+use z\lib\Core as Core;
+
 /**
- * 路由器
- * 到达php-fpm的URL如下：
- * 协议名://主机名/index.php?s=*
+ * 路由策略
+ * 使用URL重写规则后，到达php-fpm的URL将形如："协议名://主机名/index.php?s=..."
+ * 包括以下4种路由模式：
+ * 0、协议名://主机名/入口名.php?m=模块名称&c=控制器名称&其他参数...
+ * 1、协议名://主机名/模块名称(index时省略)/入口名-控制器名称-key-value-key-value....html
+ * 2、协议名://主机名/模块名称(index时省略)/六位字符串.html
+ * 3、协议名://主机名/入口名/模块名称/控制器名称/key/value/key/value...
+ * 
+ * @author 谈治烨<594557148@qq.com>
+ * @copyright 使用或改进本代码请注明原作者
  */
 class Router
 {
-	// 路由模式
+	/**
+	 * 路由模式
+	 */
 	private static $pattern;
-	
-	// 主机名
+	/**
+	 * 主机名
+	 */
 	private static $domain;
-	
-	// 静态主机
-	private static $staticDomain;
-	
-	// 当前脚本名
-	private static $selfScript;
-	
-	// 保存例实例在此属性中
+	/**
+	 * 模式2短地址存放位置
+	 */
+	private static $urlMaps;
+	/**
+	 * 作者密钥
+	 */
+	private static $authorKey = 'zhiyeTan';
+    /**
+	 * 基本字符
+	 */
+    private static $baseChar = "0aAbBcC1dDeEfF2gGhHiI3jJkKlL4mMnNoO5pPqQrR6sStTuU7vVwWxX8yYzZ9";
+	/**
+	 * 保存实例在此属性中
+	 */
 	private static $_instance;
 	
-	// 模式2短地址存放位置
-	private static $urlMaps;
-	
-	// 作者密钥
-	private static $authorKey = 'zhiyeTan';
-	
-    // 基本字符
-    private static $baseChar = "0aAbBcC1dDeEfF2gGhHiI3jJkKlL4mMnNoO5pPqQrR6sStTuU7vVwWxX8yYzZ9";
-	
-	// 保存唯一缓存标识
-	private static $cacheKey;
-	
-	// 构造函数声明为private,防止直接创建对象
+	/**
+	 * 私有构造函数
+	 */
 	private function __construct()
 	{
 		self::$pattern = ROUTE_PATTERN;
 		self::$domain = Request::domain();
-		self::$staticDomain = Request::staticDomain();
-		self::$selfScript = basename($_SERVER['SCRIPT_NAME']);
 		// 若路由为短地址模式，设置路径并检查
 		if(ROUTE_PATTERN == 2)
 		{
-			self::$urlMaps = Z_PATH . Z_DS . 'maps' . Z_DS;
-			// cache文件夹不存在则创建并赋值权限
-			if(!is_dir(self::$urlMaps))
-			{
-				mkdir(self::$urlMaps);
-				chmod(self::$urlMaps, 0777);
-			}
+			self::$urlMaps = APP_PATH . Z_DS . 'shortUrlMaps' . Z_DS;
+			// 检查文件夹
+			Core::chkFolder(self::$urlMaps);
 		}
 	}
 	
-	// 单例方法，初始化对象
+	/**
+	 * 单例构造方法
+	 * @access public
+	 * @return this
+	 */
 	public static function init()
 	{
 		if(!isset(self::$_instance))
@@ -67,63 +74,64 @@ class Router
 		return self::$_instance;
 	}
 	
-	// 阻止用户复制对象实例
+	/**
+	 * 禁止用户复制对象实例
+	 */
 	public function __clone()
 	{
 		trigger_error('Clone is not allow' , E_USER_ERROR);
 	}
 	
-	// 返回唯一缓存标识
-	public static function getCacheKey()
-	{
-		return self::$cacheKey;
-	}
-	
 	/**
 	 * 创建url
-	 * @param: mixed $mixed 可能是数组或url参数
-	 * @param: number $static 是否静态文件
-	 * @return url
+	 * @access  public
+	 * @param   mixed    $mixed   可能是数组或url参数
+	 * @return  url
 	 */
-	public static function create($mixed, $static = 0)
+	public static function create($mixed)
 	{
 		if(empty($mixed))
 		{
 			return false;
 		}
 		// 先赋值主机名
-		$url = $static ? self::$staticDomain : self::$domain;
+		$url = self::$domain;
 		// 确保拿到数组形式的参数
-		$query_arr = array();
+		$queryArr = array();
 		if(is_array($mixed))
 		{
-			$query_arr = $mixed;
+			$queryArr = $mixed;
 		}
 		else
 		{
-			parse_str($mixed, $query_arr);
+			parse_str($mixed, $queryArr);
 		}
-		// 确保非默认模式的参数中包含入口文件
-		if(self::$pattern != 0 && !isset($query_arr['e']))
+		// 确保包含必要参数
+		$queryArr['e'] = empty($queryArr['e']) ? empty($_GET['e']) ? 'index' : $_GET['e'] : $queryArr['e'];
+		$queryArr['m'] = empty($queryArr['m']) ? empty($_GET['m']) ? 'index' : $_GET['m'] : $queryArr['m'];
+		$queryArr['c'] = empty($queryArr['c']) ? empty($_GET['c']) ? 'index' : $_GET['c'] : $queryArr['c'];
+		// 根据路由模式构造URL
+		// 将API/Async请求强制使用路由模式3解析
+		if(isset($queryArr['e']) && ($queryArr['e'] == API_ENTRY || $queryArr['e'] == 'async'))
 		{
-			$query_arr['e'] = isset($_GET['e']) ? $_GET['e'] : 'index';
+			self::$pattern = 3;
 		}
 		switch(self::$pattern)
 		{
 			case 1:
-				// URL形式 [协议名://主机名/模块名称(index时省略)/入口文件名-控制器名称-操作名称-key-value-key-value....html]
+				// URL形式 [协议名://主机名/模块名称(index时省略)/入口名-控制器名称-key-value-key-value....html]
 				// 最佳三层结构，强烈建议使用此模式
-				$url .= '/' . ($query_arr['m'] == 'index' ? '' : $query_arr['m'] . '/');
-				$url .= $query_arr['e'] . '-' . $query_arr['c'] . '-' . $query_arr['a'];
-				unset($query_arr['m'], $query_arr['e'], $query_arr['c'], $query_arr['a']);
-				$elseQueryStr = preg_replace('[=|&]', '-', http_build_query($query_arr));
+				$url .= '/' . ($queryArr['m'] == 'index' ? '' : $queryArr['m'] . '/');
+				$url .= $queryArr['e'] . '-' . $queryArr['c'];
+				unset($queryArr['m'], $queryArr['e'], $queryArr['c']);
+				$elseQueryStr = preg_replace('[=|&]', '-', http_build_query($queryArr));
 				$url .= ($elseQueryStr ? '-' . $elseQueryStr : '') . '.html';
 				break;
 			case 2:
 				// URL形式 [协议名://主机名/模块名称(index时省略)/六位字符串.html]
 				// 此模式产生额外的文件读写消耗，建议仅在对地址长度有强烈需求的时候使用
 				// 转成字符串后再加密一下
-				$queryStr = http_build_query($query_arr);
+				$queryStr = http_build_query($queryArr);
 				$hashStr = md5(self::$authorKey . $queryStr);
 				// 将加密串分成4段计算
 				for($i = 0; $i < 4; ++$i)
@@ -141,40 +149,31 @@ class Router
 					}
 					// 判断映射是否有效
 					$tmpFileName = self::$urlMaps . $tmp_str;
-					if(!is_file($tmpFileName) || (is_file($tmpFileName) && self::read($tmpFileName) === $queryStr))
+					if(!is_file($tmpFileName) || (is_file($tmpFileName) && Core::readFile($tmpFileName) === $queryStr))
 					{
-						$url .= '/' . ($query_arr['m'] == 'index' ? '' : $query_arr['m'] . '/') . $tmp_str . '.html';
+						$url .= '/' . ($queryArr['m'] == 'index' ? '' : $queryArr['m'] . '/') . $tmp_str . '.html';
 						// 如果未存在映射关系则建立映射
-						if(!is_file($tmpFileName))
-						{
-							$file = fopen($tmpFileName, "w");
-							if(flock($file, LOCK_EX))
-							{
-								fwrite($file, serialize($queryStr));
-								flock($file, LOCK_UN);
-								fclose($file);
-							}
-						}
+						Core::writeFile($tmpFileName, $queryStr, true, false);
 						break;
 					}
 				}
 				break;
 			case 3:
-				// URL形式 [协议名://主机名/入口文件/模块名称/控制器名称/操作名称/key/value/key/value...]
+				// URL形式 [协议名://主机名/入口文件/模块名称/控制器名称/key/value/key/value...]
 				// 强制API使用此模式，且不建议非API入口使用此模式
-				$url .= '/' . $query_arr['e'] . '/' . $query_arr['m'] . '/' . $query_arr['c'] . '/' . $query_arr['a'] . '/';
-				unset($query_arr['e'], $query_arr['m'], $query_arr['c'], $query_arr['a']);
-				$url .= strtr(http_build_query($query_arr), '=&', '//');
+				$url .= '/' . $queryArr['e'] . '/' . $queryArr['m'] . '/' . $queryArr['c'] . '/';
+				unset($queryArr['e'], $queryArr['m'], $queryArr['c']);
+				$url .= strtr(http_build_query($queryArr), '=&', '//');
 				break;
 			default:
-				$url .= '/' . (isset($query_arr['e']) ? $query_arr['e'] . '.php' : self::$selfScript) . '?' . http_build_query($query_arr);
+				$url .= '/index.php?' . http_build_query($queryArr);
 		}
 		return $url;
 	}
 	
 	/**
 	 * 解析url把参数放到$_GET中
-	 * 
+	 * @access public
 	 */
 	public static function parse()
 	{
@@ -215,37 +214,34 @@ class Router
 		// 没有URL参数时
 		else
 		{
-			$tmps = explode('.', self::$selfScript);
+			$tmps = explode('.', basename($_SERVER['SCRIPT_NAME']));
 			$queryArr = array($tmps[0]);
 		}
-		// 将API/Async请求强制重置为路由3模式
-		if(isset($queryArr[0]) && ($queryArr[0] == 'api' || $queryArr[0] == 'async'))
-		{
-			self::$pattern = 3;
-		}
-		
 		// 把不合法的get参数清空
 		if(self::$pattern)
 		{
 			$_GET = array();
 		}
-		
+		// 将API请求强制使用路由模式3解析
+		if(isset($queryArr[0]) && $queryArr[0] == API_ENTRY)
+		{
+			self::$pattern = 3;
+		}
 		// 根据路由模式进行对应的URL解析
 		switch(self::$pattern)
 		{
 			case 1:
-				// 协议名://主机名/模块名称(index时省略)/入口文件名-控制器名称-操作名称-key-value-key-value....html
+				// 协议名://主机名/模块名称(index时省略)/入口名-控制器名称-key-value-key-value....html
 				$queryStr = isset($queryArr[1]) ? $queryArr[1] : $queryArr[0];
 				$_GET['m'] = isset($queryArr[1]) ? $queryArr[0] : 'index';
 				// 拆解为数组
 				$secArr = explode('-', $queryStr);
 				$_GET['e'] = isset($secArr[0]) ? $secArr[0] : 'index';
 				$_GET['c'] = isset($secArr[1]) ? $secArr[1] : 'index';
-				$_GET['a'] = isset($secArr[2]) ? $secArr[2] : 'index';
 				// 把奇数元素作为$_GET的键名，把偶数元素作为$_GET的值
 				foreach($secArr as $k => $v)
 				{
-					if($k > 2 && $k % 2 == 1)
+					if($k > 1 && $k % 2 == 0)
 					{
 						$_GET[$v] = isset($secArr[$k+1]) ? $secArr[$k+1] : '';
 					}
@@ -256,16 +252,13 @@ class Router
 				$queryStr = isset($queryArr[1]) ? $queryArr[1] : $queryArr[0];
 				$fileName = self::$urlMaps . $queryStr;
 				// 如存在短地址地图，取出数据并合并到$_GET中
-				if(is_file($fileName))
+				$data = Core::readFile($fileName);
+				if($data !== false)
 				{
-					$data = self::read($fileName);
-					if($data !== false)
+					parse_str($data, $query_arr);
+					foreach($query_arr as $kk => $vv)
 					{
-						parse_str($data, $query_arr);
-						foreach($query_arr as $kk => $vv)
-						{
-							$_GET[$kk] = $vv;
-						}
+						$_GET[$kk] = $vv;
 					}
 				}
 				// 不存在映射则认为是一个入口文件名
@@ -275,12 +268,11 @@ class Router
 				}
 				break;
 			case 3:
-				// 协议名://主机名/入口文件/模块名称/控制器名称/操作名称/key/value/key/value...
+				// 协议名://主机名/入口文件/模块名称/控制器名称/key/value/key/value...
 				$_GET['e'] = isset($queryArr[0]) ? $queryArr[0] : 'index';
 				$_GET['m'] = isset($queryArr[1]) ? $queryArr[1] : 'index';
 				$_GET['c'] = isset($queryArr[2]) ? $queryArr[2] : 'index';
-				$_GET['a'] = isset($queryArr[3]) ? $queryArr[3] : 'index';
-				unset($queryArr[0], $queryArr[1], $queryArr[2], $queryArr[3]);
+				unset($queryArr[0], $queryArr[1], $queryArr[2]);
 				// 重置索引后把偶数元素作为$_GET的键名，把奇数元素作为$_GET的值
 				$queryArr = array_values($queryArr);
 				foreach($queryArr as $k => $v)
@@ -294,37 +286,38 @@ class Router
 			default:
 				$_GET = array_merge($queryArr, $_GET);
 		}
-		self::setDefaultEMCA();
-		// 设置当前请求的唯一缓存标识
-		self::$cacheKey = http_build_query($_GET);
-	}
-	
-	/**
-	 * 读取短地址对应的url参数
-	 * @return string
-	 */
-	public static function read($name)
-	{
-		$file = fopen($name, "r");
-		if(flock($file, LOCK_SH))
+		// 确保必要参数有效
+		$_GET['e'] = !empty($_GET['e']) ? $_GET['e'] : 'index';
+		$_GET['m'] = !empty($_GET['m']) ? $_GET['m'] : 'index';
+		$_GET['c'] = !empty($_GET['c']) ? $_GET['c'] : 'index';
+		// 加载入口与应用位置映射
+		$entryMaps = unserialize(ENTRY_MAPS);
+		// 修正入口对应的应用位置
+		if($_GET['e'] == API_ENTRY)
 		{
-			$data = unserialize(fread($file, filesize($name)));
-			flock($file, LOCK_UN);
-			fclose($file);
-			return $data;
+			$appPath = dirname(ENTRY_PATH) . Z_DS . API_DIR . Z_DS;
 		}
-		return false;
-	}
-	
-	/**
-	 * 赋值默认的emca参数
-	 */
-	private static function setDefaultEMCA()
-	{
-		$_GET['e'] = isset($_GET['e']) ? $_GET['e'] : 'index';
-		$_GET['m'] = isset($_GET['m']) ? $_GET['m'] : 'index';
-		$_GET['c'] = isset($_GET['c']) ? $_GET['c'] : 'index';
-		$_GET['a'] = isset($_GET['a']) ? $_GET['a'] : 'index';
+		// 当建立一个专门的应用目录来处理异步操作时，会覆盖下一个 elseif，也就是说不再默认用当前应用目录来处理
+		elseif(!empty($entryMaps[$_GET['e']]))
+		{
+			$appPath = dirname(ENTRY_PATH) . Z_DS . $entryMaps[$_GET['e']] . Z_DS;
+		}
+		else
+		{
+			// 渲染404视图
+			$contraller = new Contraller();
+			$contraller->display404('入口异常！');
+			// 发送404响应
+			Response::init()->setExpire(0)->setCache(0)->setCode(404)->send();
+			exit(0);
+		}
+		define('APP_PATH', $appPath);
+		// 设置当前请求的唯一缓存标识
+		Cache::init();
+		// 设置静态缓存文件名
+		Cache::setCacheName(Cache::formatCacheTag($_GET));
+		// 设置动态缓存文件名
+		Cache::setCacheName(Cache::formatCacheTag($_GET, false), false);
 	}
 	
 }
