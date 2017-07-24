@@ -9,18 +9,28 @@ class index extends \z\core\Contraller
 	 */
 	public function main()
 	{
+<<<<<<< HEAD
 		$list = $this->getApiData('index', 'indexApi');
 		/*
+=======
+		$this->getApiData('index', 'indexApi');
+>>>>>>> adc6d6835bc97ae508068d548e36b0717a80d8a1
 		$list = array(
 			0 => array(0=>'a1', 1=>'b1', 's'=>'c1', 'child'=>array()),
 			1 => array(0=>'a2', 1=>'b2', 's'=>'c2', 'child'=>array('aaa', 'bbb', 'ccc')),
 			2 => array(0=>'a3', 1=>'b3', 's'=>'c3', 'child'=>array()),
 			4 => array(0=>'a4', 1=>'b4', 's'=>'c4', 'child'=>array())
 		);
+<<<<<<< HEAD
 		//*/
 		$this->assign('a', '11122');
 		$this->assign('list', $list);
 		$this->assign('data', 'sfsdf2');
+=======
+		$this->assign('a', '11122');
+		$this->assign('list', $list);
+		$this->assign('data', 'sfsdf');
+>>>>>>> adc6d6835bc97ae508068d548e36b0717a80d8a1
 		$this->display('index');
 	}
 	

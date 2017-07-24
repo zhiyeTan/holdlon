@@ -246,6 +246,7 @@ class Response
 		// 分别对jsonp和json做处理
 		$json = isset($_GET['callback']) ? (trim($_GET['callback']) . '(' . $json . ')') : $json;
 		return $json;
+<<<<<<< HEAD
 	}
 	/**
 	 * 将UCS-2BE转换为UTF-8编码
@@ -257,5 +258,7 @@ class Response
 	private static function __iconv($content)
 	{
 		return iconv('UCS-2BE', 'UTF-8', pack('H4', $content[1]));
+=======
+>>>>>>> adc6d6835bc97ae508068d548e36b0717a80d8a1
 	}
 }

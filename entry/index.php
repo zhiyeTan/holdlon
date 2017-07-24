@@ -8,8 +8,13 @@ define('Z_DS', DIRECTORY_SEPARATOR);
 // 定义入口目录(多点部署时不需要定义)
 define('ENTRY_PATH', __DIR__);
 
+<<<<<<< HEAD
 // 定义统一的路径
 define('UNIFIED_PATH', dirname(ENTRY_PATH) . Z_DS);
+=======
+// 定义当前入口对应的应用目录
+define('CURR_PATH', dirname(ENTRY_PATH) . Z_DS . 'app' . Z_DS);
+>>>>>>> adc6d6835bc97ae508068d548e36b0717a80d8a1
 
 // 加载框架引导文件
 require UNIFIED_PATH . Z_DS . 'z' . Z_DS . 'z.php';
