@@ -304,10 +304,6 @@ class Router
 		}
 		else
 		{
-<<<<<<< HEAD
-=======
-			//$appPath = CURR_PATH;
->>>>>>> adc6d6835bc97ae508068d548e36b0717a80d8a1
 			// 渲染404视图
 			$contraller = new Contraller();
 			$contraller->display404('入口异常！');

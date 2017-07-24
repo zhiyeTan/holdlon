@@ -264,19 +264,11 @@ class Model
 			// 判断二位数组
 			if(is_array(reset($array)))
 			{
-<<<<<<< HEAD
 				$tmpCondition = array_map(array(__CLASS__, 'fixCondition'), $array);
 			}
 			else
 			{
 				$tmpCondition = array(self::fixCondition($array));
-=======
-				$tmpCondition = array_map('fixCondition', $array);
-			}
-			else
-			{
-				$tmpCondition = array(fixCondition($array));
->>>>>>> adc6d6835bc97ae508068d548e36b0717a80d8a1
 			}
 			self::$where = array_merge(self::$where, $tmpCondition);
 		}
@@ -328,19 +320,11 @@ class Model
 		// 判断二位数组
 		if(is_array(reset($array)))
 		{
-<<<<<<< HEAD
 			$tmpCondition = array_map(array(__CLASS__, 'fixCondition'), $array);
 		}
 		else
 		{
 			$tmpCondition = array(self::fixCondition($array));
-=======
-			$tmpCondition = array_map('fixCondition', $array);
-		}
-		else
-		{
-			$tmpCondition = array(fixCondition($array));
->>>>>>> adc6d6835bc97ae508068d548e36b0717a80d8a1
 		}
 		self::$having = array_merge(self::$having, $tmpCondition);
 		return self::$_instance;
@@ -366,22 +350,13 @@ class Model
 			foreach($mixed as $k => $v)
 			{
 				self::$order[] = is_numeric($k) ?
-<<<<<<< HEAD
 								(self::fixField($v) . ' DESC') :
 								(self::fixField($k) . (in_array($v, $rule) ? strtoupper($v) : 'DESC'));
-=======
-									(fixField($v) . ' DESC') :
-									(fixField($k) . (in_array($v, $rule) ? strtoupper($v) : 'DESC'));
->>>>>>> adc6d6835bc97ae508068d548e36b0717a80d8a1
 			}
 		}
 		else
 		{
-<<<<<<< HEAD
 			self::$order[] = self::fixField($mixed) . ' DESC';
-=======
-			self::$order[] = fixField($mixed) . ' DESC';
->>>>>>> adc6d6835bc97ae508068d548e36b0717a80d8a1
 		}
 		return self::$_instance;
 	}
@@ -463,11 +438,7 @@ class Model
 		foreach(self::$field as $v)
 		{
 			// 修正字段名
-<<<<<<< HEAD
 			self::fixField($v[0]);
-=======
-			fixField($v[0]);
->>>>>>> adc6d6835bc97ae508068d548e36b0717a80d8a1
 			// 修正操作名
 			$str .= empty($v[1]) ? $v[0] : strtoupper($v[1]) . '(' . $v[0] . ')';
 			// 修正别名
@@ -919,7 +890,6 @@ class Model
 	{
 		self::$conn->close();
 	}
-<<<<<<< HEAD
 	
 	/**
 	 * 修正条件
@@ -970,45 +940,3 @@ class Model
 		return $field;
 	}
 }
-=======
-}
-
-// 修正条件
-function fixCondition($arr)
-{
-	$actionRule = array('>', '=', '<', '<>', '!=', '!>', '!<', '=>', '=<', '>=', '<=', 'in', 'not in', 'like', 'regexp', 'IN', 'NOT IN', 'LIKE', 'REGEXP');
-	$speRule = array('in', 'not in', 'IN', 'NOT IN');
-	// 二维数组且长度大于2，即字段名、操作符、值是必须的，以及操作符的合法性
-	if(is_array($arr) && count($arr) > 2 && in_array($arr[1], $actionRule))
-	{
-		// 修正字段名
-		fixField($arr[0]);
-		// 修正操作符为大写标准
-		$arr[1] = strtoupper($arr[1]);
-		// 修正字符串类型的值
-		$arr[2] = in_array($arr[1], $speRule) ? ('(' . $arr[2] .  ')') : (is_numeric($arr[2]) ? $arr[2] : "'" . $arr[2] . "'");
-		// 修正逻辑部分
-		$arr[3] = isset($arr[3]) ? strtoupper($arr[3]) : '';
-		$arr[3] = strtr($arr[3], array('||'=>'OR','&&'=>'AND'));
-		$arr[3] = empty($arr[3]) ? 'AND' : $arr[3];
-		// 添加到数组
-		return $arr;
-	}
-	return false;
-}
-
-// 修正字段名
-function fixField($field)
-{
-	if(strpos($field, '.') !== false)
-	{
-		$tmp = explode('.', $field);
-		$field = $tmp[0] . '.' . ($tmp[1] !== '*' ? '`' . $tmp[1] . '`' : $tmp[1]);
-	}
-	elseif($field !== '*')
-	{
-		$field = '`' . $field . '`';
-	}
-	return $field;
-}
->>>>>>> adc6d6835bc97ae508068d548e36b0717a80d8a1
