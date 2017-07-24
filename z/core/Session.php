@@ -2,12 +2,19 @@
 
 namespace z\core;
 
+/**
+ * Session管理
+ * 
+ * @author 谈治烨<594557148@qq.com>
+ * @copyright 使用或改进本代码请注明原作者
+ * 
+ */
 class Session
 {
-	// 保存例实例在此属性中
+	// 保存实例在此属性中
 	private static $_instance;
 	
-	// 构造函数声明为private,防止直接创建对象
+	// 禁止直接创建对象
 	private function __construct()
 	{
 		// 配置session
@@ -19,7 +26,11 @@ class Session
 		session_start();
 	}
 	
-	// 单例方法，初始化对象
+	/**
+	 * 单例构造方法
+	 * @access public
+	 * @return this
+	 */
 	public static function init()
 	{
 		if(!isset(self::$_instance))
@@ -30,19 +41,31 @@ class Session
 		return self::$_instance;
 	}
 	
-	// 阻止用户复制对象实例
+	/**
+	 * 禁止用户复制对象实例
+	 */
 	public function __clone()
 	{
 		trigger_error('Clone is not allow' , E_USER_ERROR);
 	}
 	
-	// 设置session
+	/**
+	 * 设置session
+	 * @access public
+	 * @param  string  $key    键名
+	 * @param  mixed   $value  键值
+	 */
 	public static function set($key, $value)
 	{
 		$_SESSION[$key] = $value;
 	}
 	
-	// 获得session值
+	/**
+	 * 获得session值
+	 * @access public
+	 * @param  string  $key  键名
+	 * @return mixed/boolean
+	 */
 	public static function get($key)
 	{
 		if(empty($_SESSION[$key]))
@@ -52,7 +75,11 @@ class Session
 		return $_SESSION[$key];
 	}
 	
-	// 设置并返回安全令牌
+	/**
+	 * 设置并返回安全令牌
+	 * @access public
+	 * @return string
+	 */
 	public static function getToken()
 	{
 		$token = self::get('__token__');
@@ -65,7 +92,11 @@ class Session
 		return $token;
 	}
 	
-	// 删除session
+	/**
+	 * 删除session
+	 * @access public
+	 * @param  string  $key  键名
+	 */
 	public static function delete($key)
 	{
 		if(is_array($key))
@@ -81,7 +112,10 @@ class Session
 		}
 	}
 	
-	// 销毁session
+	/**
+	 * 销毁session
+	 * @access public
+	 */
 	public static function clean()
 	{
 		$_SESSION = array();

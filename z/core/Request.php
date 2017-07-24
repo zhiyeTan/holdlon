@@ -2,6 +2,13 @@
 
 namespace z\core;
 
+/**
+ * 请求管理
+ * 
+ * @author 谈治烨<594557148@qq.com>
+ * @copyright 使用或改进本代码请注明原作者
+ * 
+ */
 class Request
 {
 	/**
@@ -30,31 +37,41 @@ class Request
 		return false;
 	}
 	
-	// 获得当前端口
+	/**
+	 * 获得当前端口
+	 * @access public
+	 * @return number
+	 */
 	public static function port()
 	{
 		return $_SERVER['SERVER_PORT'];
 	}
 	
-	// 当前URL地址中的scheme参数
+	/**
+	 * 当前URL地址中的scheme参数
+	 * @access public
+	 * @return string
+	 */
 	public static function scheme()
 	{
 		return self::isSsl() ? 'https' : 'http';
 	}
 	
-	// 获取当前包含协议的域名
+	/**
+	 * 获取当前包含协议的域名
+	 * @access public
+	 * @return string
+	 */
 	public static function domain()
 	{
 		return self::scheme() . '://' . $_SERVER['HTTP_HOST'];
 	}
 	
-	// 获取静态资源所在的包含协议的域名
-	public static function staticDomain()
-	{
-		return self::scheme() . '://' . STATIC_DOMAIN;
-	}
-	
-	// 获取cookie/session需设置的域
+	/**
+	 * 获取cookie/session需设置的域
+	 * @access public
+	 * @return string
+	 */
 	public static function cosDomain()
 	{
 		return substr($_SERVER['HTTP_HOST'], strpos($_SERVER['HTTP_HOST'], '.'));
@@ -62,9 +79,10 @@ class Request
 	
 	/**
 	 * 获取客户端IP地址
-	 * @param integer   $type 返回类型 0 返回IP地址 1 返回IPV4地址数字
-	 * @param boolean   $adv 是否进行高级模式获取（有可能被伪装）
-	 * @return mixed
+	 * @access public
+	 * @param  integer  $type  返回类型 0 返回IP地址 1 返回IPV4地址数字
+	 * @param  boolean  $adv   是否进行高级模式获取（有可能被伪装）
+	 * @return array
 	 */
 	public static function ip($type = 0, $adv = false)
 	{
