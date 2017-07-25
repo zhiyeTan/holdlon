@@ -52,7 +52,11 @@ class Model
 		self::$conn = new mysqli($options['server'], $options['username'], $options['password'], $options['dbname'], $options['port']);
 		if(self::$conn->connect_error)
 		{
-			die("连接失败: " . $conn->connect_error);
+			$controller = new Controller();
+			$controller->display404('数据库连接异常！');
+			// 发送404响应
+			Response::init()->setExpire(0)->setCache(0)->setCode(404)->send();
+			exit(0);
 		}
 		self::$conn->set_charset($options['charset']);
 	}
