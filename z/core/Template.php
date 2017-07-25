@@ -110,12 +110,12 @@ class Template
 		preg_match_all('/\{\\$widgetView_([a-zA-Z]*)\}/', $content, $res);
 		foreach($res[1] as $k => $v)
 		{
-			$tmpContrallerPath = $widgetPath . 'contrallers' . Z_DS . $v . '.php';
+			$tmpControllerPath = $widgetPath . 'controllers' . Z_DS . $v . '.php';
 			$tmpViewPath = $widgetPath . 'views' . Z_DS . $v . self::$widgetSuffix;
 			// 允许部件控制器为空
-			if(is_file($tmpContrallerPath))
+			if(is_file($tmpControllerPath))
 			{
-				include $tmpContrallerPath;
+				include $tmpControllerPath;
 			}
 			$pattern[$res[0][$k]] = file_get_contents($tmpViewPath);
 		}
@@ -273,11 +273,11 @@ class Template
 		preg_match_all('/\{\\$widgetView_([a-zA-Z]*)\}/', $content, $res);
 		foreach($res[1] as $k => $v)
 		{
-			$tmpContrallerPath = $widgetPath . 'contrallers' . Z_DS . $v . '.php';
+			$tmpControllerPath = $widgetPath . 'controllers' . Z_DS . $v . '.php';
 			// 允许部件控制器为空
-			if(is_file($tmpContrallerPath))
+			if(is_file($tmpControllerPath))
 			{
-				include $tmpContrallerPath;
+				include $tmpControllerPath;
 			}
 		}
 		// 取出部件数据并赋值到数据栈中

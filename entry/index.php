@@ -13,7 +13,3 @@ define('UNIFIED_PATH', dirname(ENTRY_PATH) . Z_DS);
 
 // 加载框架引导文件
 require UNIFIED_PATH . Z_DS . 'z' . Z_DS . 'z.php';
-
-$app = new z\core\App();
-
-$app->run();

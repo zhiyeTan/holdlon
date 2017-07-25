@@ -9,3 +9,8 @@ spl_autoload_register(array('z', 'autoload'), true, true);
 
 // 进行基本配置
 z::setup();
+
+// 初始化并运行应用
+$app = new z\core\App();
+
+$app->run();

@@ -39,14 +39,14 @@ class App
 		// 若不使用缓存则设置缓存为false，否则获取真实的缓存
 		$cache = self::$noCache ? !1 : Cache::get();
 		// 分别获得模块、控制器文件名
-		$moduleFileName = APP_PATH . 'contrallers' . Z_DS . $_GET['m'];
-		$contrallerFileName = $moduleFileName . Z_DS . $_GET['c'] . '.php';
+		$moduleFileName = APP_PATH . 'controllers' . Z_DS . $_GET['m'];
+		$controllerFileName = $moduleFileName . Z_DS . $_GET['c'] . '.php';
 		// 获得类别名
-		$alias = '\\contrallers\\' . $_GET['m'] . '\\' . $_GET['c'];
+		$alias = '\\controllers\\' . $_GET['m'] . '\\' . $_GET['c'];
 		// 创建一个空对象
 		$object = (object) array();
 		// 检查控制器是否存在
-		if(is_file($contrallerFileName))
+		if(is_file($controllerFileName))
 		{
 			// 赋值为控制器对象
 			$object = new $alias();
@@ -63,8 +63,8 @@ class App
 			if(self::$error || !method_exists($object, 'main'))
 			{
 				// 渲染404视图
-				$contraller = new Contraller();
-				$contraller->display404('控制器异常！');
+				$controller = new Controller();
+				$controller->display404('控制器异常！');
 				// 发送404响应
 				Response::setExpire(0)->setCache(0)->setCode(404)->send();
 				exit(0);

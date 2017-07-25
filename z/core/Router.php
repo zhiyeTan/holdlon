@@ -305,8 +305,8 @@ class Router
 		else
 		{
 			// 渲染404视图
-			$contraller = new Contraller();
-			$contraller->display404('入口异常！');
+			$controller = new Controller();
+			$controller->display404('入口异常！');
 			// 发送404响应
 			Response::init()->setExpire(0)->setCache(0)->setCode(404)->send();
 			exit(0);

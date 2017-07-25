@@ -63,12 +63,6 @@ class Loader
 		// cookie有效时间
 		define('COOKIE_EXPIRE', $CFG['cookie_expire']);
 		
-		// 定义MVC错误类型常量
-		define('INVALID_ENTRY', 1);        // 无效的入口
-		define('INVALID_MODULE', 2);       // 无效的模块
-		define('INVALID_CONTRALLER', 3);   // 无效的控制器
-		define('INVALID_ACTION', 4);       // 无效的操作
-		
 		// 数据库配置项
 		foreach(self::$dbcfgkey as $v)
 		{
