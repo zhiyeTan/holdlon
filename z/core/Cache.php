@@ -179,7 +179,7 @@ class Cache
 	public static function save($data, $isStatic = true, $isApi = false)
 	{
 		$filename = $isApi ? self::$api_cache_name : self::getCachePath($isStatic);
-		Core::writeFile($filename, $data, $isApi || $isStatic);
+		Core::fastWriteFile($filename, $data, $isApi || $isStatic);
 		return $filename;
 	}
 	
@@ -194,7 +194,7 @@ class Cache
 		$filename = $isApi ? self::$api_cache_name : self::getCachePath($isStatic);
 		if(self::chkCacheExpire($filename, $isStatic, $isApi))
 		{
-			return !$isApi && !$isStatic ? $filename : Core::readFile($filename, $isStatic);
+			return !$isApi && !$isStatic ? $filename : Core::fastReadFile($filename, $isStatic);
 		}
 		return false;
 	}

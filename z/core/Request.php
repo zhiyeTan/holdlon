@@ -68,6 +68,16 @@ class Request
 	}
 	
 	/**
+	 * 获取当前完整的URL
+	 * @access public
+	 * @return string
+	 */
+	public static function realUrl()
+	{
+		return self::domain() . $_SERVER['REQUEST_URI'];
+	}
+	
+	/**
 	 * 获取cookie/session需设置的域
 	 * @access public
 	 * @return string

@@ -12,16 +12,45 @@ namespace z\core;
 class Controller extends Template
 {
 	// 可接受的GET参数
-	protected $allowRequestKey = array();
-	// 移除不合法的请求参数
-	public function fixRequestKey()
+	protected $allowGetKey = array();
+	// 可接受的POST参数
+	protected $allowPostKey = array();
+	/**
+	 * 校验请求
+	 * @access public
+	 */
+	public function fixQuest()
+	{
+		$this->fixGet();
+		$this->fixPost();
+	}
+	
+	/**
+	 * 移除不合法的请求参数
+	 * @access private
+	 */
+	private function fixGet()
 	{
 		$diff = array_diff(array_keys($_GET), array_merge(array('e', 'm', 'c'), self::$allowRequestKey));
-		foreach($diff as $v)
+		// 若存在差异，记录请求信息到日志中，并删除不合法的参数
+		if($diff)
 		{
-			unset($_GET[$v]);
+			$content  = date('Y-m-d H:i:s', $_SERVER['REQUEST_TIME']) . ' ';
+			$content .= Request::ip(0) . ' ';
+			$content .= Request::realUrl();
+			Log::init()->save('illegalGetLog', $content);
+			array_map(function($v){unset($_GET[$v]);}, $diff);
 		}
 	}
+	/**
+	 * 修正不合法的POST参数
+	 * @access private
+	 */
+	private function fixPost()
+	{
+		
+	}
+	
 	/**
 	 * 读取API提供的数据
 	 * @access public

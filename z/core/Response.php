@@ -212,7 +212,8 @@ class Response
 		{
 			self::$content = self::formatToJSON(self::$content);
 		}
-		// TODO 这里判断是否使用了静态主机，若使用，则替换掉所有非http开头的静态文件的路径为指向静态主机的路径
+		// TODO 这里判断是否使用了静态主机，若使用，则替换掉所有非http/https开头的静态文件的路径为指向静态主机的路径
+		// preg_match_all('/(?!http[s]{0,1}:\/\/)(.*?jpg|png|js|css|mp4)/i', $content, $res);
 		// 成功且使用缓存时保存缓存
 		if(200 == self::$code && self::$cache)
 		{

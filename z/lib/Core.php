@@ -38,14 +38,14 @@ class Core
 	/**
 	 * 读取文档内容
 	 * 
-	 * @access  public
+	 * @access public
 	 * @param  path        $fileName     文件路径
 	 * @param  true/false  $isSerialize  是否序列化的数据，默认true
 	 * @return string/boolean
 	 */
 	public static function readFile($fileName, $isSerialize = true)
 	{
-		if(is_file($fileName))
+		if(is_file($fileName) && is_readable($fileName))
 		{
 			$file = fopen($fileName, 'r');
 			if(flock($file, LOCK_SH))
@@ -61,9 +61,28 @@ class Core
 	}
 	
 	/**
+	 * 快速读取文档内容
+	 * 针对小文件，大文件请使用readFile方法
+	 * 
+	 * @access public
+	 * @param  path        $fileName     文件路径
+	 * @param  true/false  $isSerialize  是否序列化的数据，默认true
+	 * @return string/boolean
+	 */
+	public static function fastReadFile($fileName, $isSerialize = true)
+	{
+		if(!is_file($fileName) || !is_readable($fileName))
+		{
+			return false;
+		}
+		$data = file_get_contents($fileName);
+		return $isSerialize ? unserialize($data) : $data;
+	}
+	
+	/**
 	 * 写入文档内容
 	 * 
-	 * @access  public
+	 * @access public
 	 * @param  path        $fileName     文件路径
 	 * @param  mixed       $data         需要写入的数据
 	 * @param  true/false  $isSerialize  是否序列化的数据，默认true
@@ -77,6 +96,10 @@ class Core
 		{
 			return true;
 		}
+    	if(!is_writeable($fileName))
+    	{
+    	    return false;
+    	}
 		$mode = $isCover ? 'w' : 'ab';
 		$file = fopen($fileName, $mode);
 		if(flock($file, LOCK_EX))
@@ -84,6 +107,37 @@ class Core
 			fwrite($file, $isSerialize ? serialize($data) : $data);
 			flock($file, LOCK_UN);
 			fclose($file);
+			return true;
+		}
+		return false;
+	}
+	
+	
+	/**
+	 * 快速写入文档内容
+	 * 针对小文件，大文件请使用writeFile方法
+	 * 
+	 * @access public
+	 * @param  path        $fileName     文件路径
+	 * @param  mixed       $data         需要写入的数据
+	 * @param  true/false  $isSerialize  是否序列化的数据，默认true
+	 * @param  true/false  $isChange     是否变更内容，默认true
+	 * @param  true/false  $isCover     是否覆盖原内容（覆盖或追加），默认true
+	 * @return boolean
+	 */
+	public static function fastWriteFile($fileName, $data, $isSerialize = true, $isChange = true, $isCover = true)
+	{
+		if(!$isChange && is_file($fileName))
+		{
+			return true;
+		}
+		if(!is_writeable($fileName))
+		{
+			return false;
+		}
+		$mode = $isCover ? LOCK_EX : FILE_APPEND|LOCK_EX;
+		if(file_put_contents($fileName, $isSerialize ? serialize($data) : $data, $mode))
+		{
 			return true;
 		}
 		return false;

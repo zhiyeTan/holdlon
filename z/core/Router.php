@@ -149,11 +149,11 @@ class Router
 					}
 					// 判断映射是否有效
 					$tmpFileName = self::$urlMaps . $tmp_str;
-					if(!is_file($tmpFileName) || (is_file($tmpFileName) && Core::readFile($tmpFileName) === $queryStr))
+					if(!is_file($tmpFileName) || (is_file($tmpFileName) && Core::fastReadFile($tmpFileName) === $queryStr))
 					{
 						$url .= '/' . ($queryArr['m'] == 'index' ? '' : $queryArr['m'] . '/') . $tmp_str . '.html';
 						// 如果未存在映射关系则建立映射
-						Core::writeFile($tmpFileName, $queryStr, true, false);
+						Core::fastWriteFile($tmpFileName, $queryStr, true, false);
 						break;
 					}
 				}
@@ -252,7 +252,7 @@ class Router
 				$queryStr = isset($queryArr[1]) ? $queryArr[1] : $queryArr[0];
 				$fileName = self::$urlMaps . $queryStr;
 				// 如存在短地址地图，取出数据并合并到$_GET中
-				$data = Core::readFile($fileName);
+				$data = Core::fastReadFile($fileName);
 				if($data !== false)
 				{
 					parse_str($data, $query_arr);
