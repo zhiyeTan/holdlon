@@ -11,16 +11,16 @@ use z\core\Session as Session;
  * @copyright 使用或改进本代码请注明原作者
  * 
  */
-class Validate
+class Safe
 {
 	/**
-	 * 验证字段值是否为有效格式
+	 * 验证值是否为有效格式
 	 * @access public
 	 * @param  string   $rule   验证规则
 	 * @param  mixed    $value  字段值
 	 * @return boolean
 	 */
-	public static function is($rule, $value = null)
+	public static function verify($rule, $value = null)
 	{
 		switch ($rule)
 		{
@@ -66,26 +66,26 @@ class Validate
 				break;
 			case 'ip':
 				// 是否为IP地址
-				$result = self::filter($value, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 | FILTER_FLAG_IPV6);
+				$result = self::checkByfilterVar($value, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 | FILTER_FLAG_IPV6);
 				break;
 			case 'url':
 				// 是否为一个URL地址
-				$result = self::filter($value, FILTER_VALIDATE_URL);
+				$result = self::checkByfilterVar($value, FILTER_VALIDATE_URL);
+				break;
+			case 'int':
+				// 是否为整型
+				$result = is_int($value);
 				break;
 			case 'float':
 				// 是否为float
-				$result = self::filter($value, FILTER_VALIDATE_FLOAT);
+				$result = is_float($value);
 				break;
 			case 'number':
 				$result = is_numeric($value);
 				break;
-			case 'integer':
-				// 是否为整型
-				$result = self::filter($value, FILTER_VALIDATE_INT);
-				break;
 			case 'email':
 				// 是否为邮箱地址
-				$result = self::filter($value, FILTER_VALIDATE_EMAIL);
+				$result = self::checkByfilterVar($value, FILTER_VALIDATE_EMAIL);
 				break;
 			case 'boolean':
 				// 是否为布尔值
@@ -94,19 +94,23 @@ class Validate
 			case 'token':
 				$result = self::token();
 				break;
-			case 'form':
-				// 是否标准表单
-				$result = self::form();
-				break;
-			case 'formToken':
-				// 表单是否包含令牌
-				$result = self::hasToken();
-				break;
 			default:
 				// 正则验证
 				$result = self::regex($value, $rule);
 		}
 		return $result;
+	}
+	
+	/**
+	 * 过滤为合法的值
+	 * @access public
+	 * @param  string   $rule   验证规则
+	 * @param  mixed    $value  字段值
+	 * @return mixed
+	 */
+	public static function filter($rule, $value)
+	{
+		
 	}
 
 	/**
@@ -133,7 +137,7 @@ class Validate
 	 * @param  mixed      $rule   验证规则
 	 * @return boolean
 	 */
-	protected static function filter($value, $rule)
+	protected static function checkByfilterVar($value, $rule)
 	{
 		if(is_string($rule) && strpos($rule, ','))
 		{
@@ -155,7 +159,7 @@ class Validate
 	 * @access protected
 	 * @return boolean
 	 */
-	protected static function token()
+	protected static function token($val)
 	{
 		$token = Session::get('__token__');
 		if(!$token)
@@ -163,7 +167,7 @@ class Validate
 			// 令牌无效
 			return false;
 		}
-		if($token === $_POST['form']['token'])
+		if($token === $val)
 		{
 			// 验证完成即销毁，防止重复提交
 			Session::delete('__token__');
@@ -171,34 +175,6 @@ class Validate
 		}
 		// 重置令牌
 		Session::delete('__token__');
-		return false;
-	}
-	
-	/**
-	 * 验证是否标准表单提交
-	 * @access protected
-	 * @return boolean
-	 */
-	protected static function form()
-	{
-		if(isset($_POST['form']))
-		{
-			return true;
-		}
-		return false;
-	}
-	
-	/**
-	 * 验证表单是否包含令牌
-	 * @access protected
-	 * @return boolean
-	 */
-	protected static function hasToken()
-	{
-		if(isset($_POST['form']['token']))
-		{
-			return true;
-		}
 		return false;
 	}
 }
