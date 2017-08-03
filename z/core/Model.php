@@ -29,6 +29,9 @@ class Model
 	private static $data  = array();
 	private static $prefix= '';
 	private static $limit = '';
+	private static $useExplain = true;
+	// 查询耗时，如果超过这个时间则考虑写入慢查询日志中
+	private static $maxTime = 1;
 	
 	private static $_instance;
 	
@@ -649,7 +652,33 @@ class Model
 			self::$debug[] = $sql;
 		}
 		self::clean();
-		return self::$conn->query($sql);
+		// 不启用查询分析或SQL语句不是查询语句时，直接返回查询结果
+		if(!self::$useExplain || strpos(strtoupper(trim($sql)), 'SELECT') !== 0)
+		{
+			return self::$conn->query($sql);
+		}
+		// 启用查询分析时，优先分析执行时间，若小于
+		$startTime = microtime(true);
+		$result = self::$conn->query($sql);
+		$usedTime = sprintf('%.5f', microtime(true) - $startTime);
+		if($usedTime > self::$maxTime)
+		{
+			$esql = 'EXPLAIN ' . $sql;
+			$explain = self::$conn->query($esql);
+			if($explain !== false)
+			{
+				$row = $explain->fetch_assoc();
+				if(isset($row['type']) && in_array(strtolower($row['type']), array('index', 'all')))
+				{
+			    	$content  = date('Y-m-d H:i:s', $_SERVER['REQUEST_TIME']) . ' ';
+					$content .= $row['type'] . ' ';
+					$content .= 'times:' . $usedTime . ' ';
+					$content .= $sql;
+					Log::init()->save('slowQueryLog', $content);
+				}
+			}
+		}
+		return $result;
 	}
 	
 	/**

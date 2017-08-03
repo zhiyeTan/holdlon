@@ -102,7 +102,8 @@ class Safe
 	}
 	
 	/**
-	 * 过滤为合法的值
+	 * 过滤为合法的值（主要针对数据库类型进行过滤）
+     *
 	 * @access public
 	 * @param  string   $rule   验证规则
 	 * @param  mixed    $value  字段值
@@ -110,7 +111,58 @@ class Safe
 	 */
 	public static function filter($rule, $value)
 	{
-		
+		$value = trim($value);
+		switch($rule)
+		{
+			case 'boolean':
+				// 布尔型
+				$result = !!$value;
+				break;
+			case 'int':
+				// 整数
+				$result = (int)$val;
+				break;
+			case 'float':
+				// 浮点数
+				$result = (float)$val;
+				break;
+			case 'year':
+				// 对应mysql的time类型
+				$result = self::timeFilter($value, 'year');
+				break;
+			case 'date':
+				// 对应mysql的date类型
+				$result = self::timeFilter($value, 'date');
+				break;
+			case 'time':
+				// 对应mysql的time类型
+				$result = self::timeFilter($value, 'time');
+				break;
+			case 'datetime':
+				// 对应mysql的datetime类型
+				$result = self::timeFilter($value, 'datetime');
+				break;
+			case 'timestamp':
+				// 无格式时间戳
+				$result = self::timeFilter($value);
+				break;
+			case 'nl2br':
+				// 换行符过滤为<br>
+				$result = nl2br($value);
+				break;
+			case 'notag':
+				// 去掉标记
+				$result = strip_tags($value);
+				break;
+			case 'html':
+				// 转为html格式
+				$result = htmlspecialchars($value);
+				break;
+			default:
+				// 默认转义单双引号、反斜线及NULL
+				$result = get_magic_quotes_gpc() ? $value : addslashes($value);
+		}
+		return $result;
 	}
 
 	/**
@@ -176,5 +228,50 @@ class Safe
 		// 重置令牌
 		Session::delete('__token__');
 		return false;
+	}
+	
+	/**
+	 * 时间过滤
+	 * @access private
+	 * @param  string/number   $value
+	 * @param  string          时间类型
+	 * @return string/number
+	 */
+	private static function timeFilter($value, $type = '')
+	{
+		// 如果时间戳不合法，重置为当前时间戳
+		if(is_numeric($value))
+		{
+			$len = strlen((int)$value);
+			if($len != 9 && $len != 10)
+			{
+				$value = time();
+			}
+		}
+		// 如果时间格式不合法，重置为当前时间戳
+		else
+		{
+			$value = strtotime($value);
+			$value = $value ? $value : time();
+		}
+		if(!$type)
+		{
+			return $value;
+		}
+		switch ($type)
+		{
+			case 'year':
+				$format = 'Y';
+				break;
+			case 'date':
+				$format = 'Y-m-d';
+				break;
+			case 'time':
+				$format = 'H:i:s';
+				break;
+			default:
+				$format = 'Y-m-d H:i:s';
+		}
+		return date($format, $value);
 	}
 }

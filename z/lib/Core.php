@@ -96,7 +96,7 @@ class Core
 		{
 			return true;
 		}
-    	if(!is_writeable($fileName))
+    	if(is_file($fileName) && !is_writeable($fileName))
     	{
     	    return false;
     	}
@@ -131,7 +131,7 @@ class Core
 		{
 			return true;
 		}
-		if(!is_writeable($fileName))
+		if(is_file($fileName) && !is_writeable($fileName))
 		{
 			return false;
 		}

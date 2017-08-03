@@ -11,9 +11,9 @@ namespace z\core;
  */
 class Controller extends Template
 {
-	// 可接受的GET参数
+	// 可接受的GET参数键名及规则值对，如：array('id'=>'int', 'c'=>'alpha')
 	protected $allowGetKey = array();
-	// 可接受的POST参数
+	// 可接受的POST参数键名及规则值对，如：array('name'=>'chs', 'content'=>'html')
 	protected $allowPostKey = array();
 	/**
 	 * 校验请求
@@ -31,7 +31,7 @@ class Controller extends Template
 	 */
 	private function fixGet()
 	{
-		$diff = array_diff(array_keys($_GET), array_merge(array('e', 'm', 'c'), self::$allowRequestKey));
+		$diff = array_diff(array_keys($_GET), array_merge(array('e', 'm', 'c'), array_keys(self::$allowGetKey)));
 		// 若存在差异，记录请求信息到日志中，并删除不合法的参数
 		if($diff)
 		{
@@ -41,6 +41,15 @@ class Controller extends Template
 			Log::init()->save('illegalGetLog', $content);
 			array_map(function($v){unset($_GET[$v]);}, $diff);
 		}
+		foreach(self::$allowGetKey as $k => $rule)
+		{
+			if(isset($_GET[$k]))
+			{
+				// 检查
+				Safe::verify($rule, $_GET[$k]);
+			}
+		}
+		// 键名、默认值、验证规则、过滤规则
 	}
 	/**
 	 * 修正不合法的POST参数
