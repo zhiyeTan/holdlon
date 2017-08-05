@@ -306,10 +306,7 @@ class Router
 		{
 			// 渲染404视图
 			$controller = new Controller();
-			$controller->display404('入口异常！');
-			// 发送404响应
-			Response::init()->setExpire(0)->setCache(0)->setCode(404)->send();
-			exit(0);
+			$controller->displayError(404, '入口异常！');
 		}
 		define('APP_PATH', $appPath);
 		// 设置当前请求的唯一缓存标识

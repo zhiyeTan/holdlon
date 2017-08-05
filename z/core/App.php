@@ -72,10 +72,7 @@ class App
 			{
 				// 渲染404视图
 				$controller = new Controller();
-				$controller->display404('控制器异常！');
-				// 发送404响应
-				Response::setExpire(0)->setCache(0)->setCode(404)->send();
-				exit(0);
+				$controller->displayError(404, '控制器异常！');
 			}
 			/**
 			 * TODO 这个注释掉的语句是用来修正请求参数的，它能排序一些非法提交的参数
@@ -84,6 +81,9 @@ class App
 			 *      最终，可以利用这一特点进行静态缓存的更新
 			 * $object->fixRequestKey();
 			 */
+			// 分别执行GET参数、POST参数的安全校验以及主方法
+			$object->keepSafeQuest();
+			$object->keepSafeQuest(false);
 			$object->main();
 		}
 		else

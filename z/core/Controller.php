@@ -11,53 +11,80 @@ namespace z\core;
  */
 class Controller extends Template
 {
-	// 可接受的GET参数键名及规则值对，如：array('id'=>'int', 'c'=>'alpha')
-	protected $allowGetKey = array();
-	// 可接受的POST参数键名及规则值对，如：array('name'=>'chs', 'content'=>'html')
-	protected $allowPostKey = array();
+	// 受许可的GET参数的键名数组，如：array('cid', 'keyword', 'page')
+	// 需验证的GET参数的键名及规则值对数组，如：array('cid'=>'int', 'keyword'=>'addslashes', 'page'=>'int')
+	// 需过滤的GET参数的键名，默认值，规则数组，如：array(array('cid', 0, 'int'), array('keyword', '', 'addslashes', array('page', 1, 'int')))
+	// POST同理
+	protected static $allowGetKeys		= array();
+	protected static $verifyGetValues	= array();
+	protected static $filterGetValues	= array();
+	protected static $allowPostKeys	= array();
+	protected static $verifyPostValues	= array();
+	protected static $filterPostValues	= array();
+	
 	/**
 	 * 校验请求
 	 * @access public
+	 * @param  boolean  $isGet  目标函数是否为GET
 	 */
-	public function fixQuest()
+	public function keepSafeQuest($isGet = true)
 	{
-		$this->fixGet();
-		$this->fixPost();
-	}
-	
-	/**
-	 * 移除不合法的请求参数
-	 * @access private
-	 */
-	private function fixGet()
-	{
-		$diff = array_diff(array_keys($_GET), array_merge(array('e', 'm', 'c'), array_keys(self::$allowGetKey)));
-		// 若存在差异，记录请求信息到日志中，并删除不合法的参数
-		if($diff)
+		// 分别确定目标数组、许可键名数组、验证数组、过滤数组、基础键名数组、异常日志文件名
+		$target		= $isGet ? $_GET : $_POST;
+		$allows		= $isGet ? self::$allowGetKeys : self::$allowPostKeys;
+		$verifys	= $isGet ? self::$verifyGetValues : self::$verifyPostValues;
+		$filters	= $isGet ? self::$filterGetValues : self::$filterPostValues;
+		$basics		= $isGet ? array('e', 'm', 'c') : array('token');
+		$logName	= $isGet ? 'illegalGetLog' : 'abnormalPostLog';
+		
+		$error = false;
+		// 获得不被允许的参数键名
+		$diff = array_diff(array_keys($target), array_merge($basics, array_keys($allows)));
+		// 验证参数的合法性
+		foreach($verifys as $k => $rule)
+		{
+			// 存在且不合法时标记错误
+			if(isset($target[$k]) && !Safe::verify($target[$k], $rule))
+			{
+				$error = true;
+				break;
+			}
+		}
+		// 若存在差异键名或非法验证，记录请求信息到日志中
+		if($diff || $error)
 		{
 			$content  = date('Y-m-d H:i:s', $_SERVER['REQUEST_TIME']) . ' ';
 			$content .= Request::ip(0) . ' ';
-			$content .= Request::realUrl();
-			Log::init()->save('illegalGetLog', $content);
-			array_map(function($v){unset($_GET[$v]);}, $diff);
-		}
-		foreach(self::$allowGetKey as $k => $rule)
-		{
-			if(isset($_GET[$k]))
+			$content .= $isGet ? Request::realUrl() : var_export($_POST);
+			Log::init()->save($logName, $content);
+			// 参数不合法时直接输出错误
+			if($error)
 			{
-				// 检查
-				Safe::verify($rule, $_GET[$k]);
+				$this->displayError(405, '非法参数');
+			}
+			// 删除多余的参数
+			array_map(function($v){
+				if($isGet) unset($_GET[$v]);
+				else unset($_POST[$v]);
+			}, $diff);
+			// 如果GET参数存在差异，重设静态与动态缓存的文件名
+			if($isGet)
+			{
+				Cache::setCacheName(Cache::formatCacheTag($_GET));
+				Cache::setCacheName(Cache::formatCacheTag($_GET, false), false);
 			}
 		}
-		// 键名、默认值、验证规则、过滤规则
-	}
-	/**
-	 * 修正不合法的POST参数
-	 * @access private
-	 */
-	private function fixPost()
-	{
-		
+		// 过滤参数
+		foreach($filters as $row)
+		{
+			if(isset($target[$row[0]]))
+			{
+				$tmpValue = Safe::filter($target[$row[0]], $row[2]);
+				$tmpValue = empty($tmpValue) ? $row[1] : $tmpValue;
+				if($isGet) $_GET[$row[0]] = $tmpValue;
+				else $_POST[$row[0]] = $tmpValue;
+			}
+		}
 	}
 	
 	/**
@@ -95,29 +122,25 @@ class Controller extends Template
 		return false;
 	}
 	/**
-	 * 渲染404页面
+	 * 异常页面渲染
 	 * @access public
-	 * @param  string  $mixed
+	 * @param  number  $code     状态码
+	 * @param  string  $content  内容
 	 */
-	public function display404($str)
+	public function displayError($code, $content)
 	{
-		// $this->render($template404); // 可渲染指定的404页面
-		Response::setContent('<div style="padding: 24px 48px;"><h1>&gt;_&lt;|||</h1><p>' . $str . '</p>');
-	}
-	/**
-	 * 渲染401页面
-	 * @access public
-	 * @param  string  $mixed
-	 */
-	public function display401($str)
-	{
-		// $this->render($template404); // 可渲染指定的401页面
-		Response::setContent('<div style="padding: 24px 48px;"><h1>&gt;_&lt;|||</h1><p>' . $str . '</p>');
+		$content = '<div style="padding: 24px 48px;"><h1>&gt;_&lt;|||</h1><p>' . $content . '</p>';
+		Response::init()
+			->setExpire(0)
+			->setCache(0)
+			->setCode($code)
+			->setContent($content)
+			->send();
+		exit(0);
 	}
 	/**
 	 * 渲染指定页面
 	 * @access public
-	 * @param  string  $mixed
 	 */
 	public function display($templateName)
 	{

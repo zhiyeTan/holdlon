@@ -148,15 +148,15 @@ class Cache
 		{
 			return false;
 		}
-		// 动态缓存没有过期时间
-		if(!$isApi && !$isStatic)
-		{
-			return true;
-		}
 		// 若应用入口为API入口，修正状态
 		if($_GET['e'] == API_ENTRY)
 		{
 			$isApi = true;
+		}
+		// 动态缓存没有过期时间
+		if(!$isApi && !$isStatic)
+		{
+			return true;
 		}
 		// 数据接口使用数据缓存的有效时间，静态使用默认
 		$tmpExpire = $isApi ? self::$data_cache_expire : self::$static_cache_expire;

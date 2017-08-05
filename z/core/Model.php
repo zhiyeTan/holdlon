@@ -56,10 +56,7 @@ class Model
 		if(self::$conn->connect_error)
 		{
 			$controller = new Controller();
-			$controller->display404('数据库连接异常！');
-			// 发送404响应
-			Response::init()->setExpire(0)->setCache(0)->setCode(404)->send();
-			exit(0);
+			$controller->displayError(500, '数据库连接异常！');
 		}
 		self::$conn->set_charset($options['charset']);
 	}

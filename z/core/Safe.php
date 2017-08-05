@@ -20,7 +20,7 @@ class Safe
 	 * @param  mixed    $value  字段值
 	 * @return boolean
 	 */
-	public static function verify($rule, $value = null)
+	public static function verify($value, $rule)
 	{
 		switch ($rule)
 		{
@@ -92,7 +92,7 @@ class Safe
 				$result = in_array($value, array(0, 1, true, false));
 				break;
 			case 'token':
-				$result = self::token();
+				$result = self::token($value);
 				break;
 			default:
 				// 正则验证
@@ -109,7 +109,7 @@ class Safe
 	 * @param  mixed    $value  字段值
 	 * @return mixed
 	 */
-	public static function filter($rule, $value)
+	public static function filter($value, $rule)
 	{
 		$value = trim($value);
 		switch($rule)
@@ -211,7 +211,7 @@ class Safe
 	 * @access protected
 	 * @return boolean
 	 */
-	protected static function token($val)
+	protected static function token($value)
 	{
 		$token = Session::get('__token__');
 		if(!$token)
@@ -219,7 +219,7 @@ class Safe
 			// 令牌无效
 			return false;
 		}
-		if($token === $val)
+		if($token === $value)
 		{
 			// 验证完成即销毁，防止重复提交
 			Session::delete('__token__');
