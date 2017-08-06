@@ -2,6 +2,8 @@
 
 namespace z\core;
 
+use z;
+
 /**
  * 响应管理
  * 
@@ -9,7 +11,7 @@ namespace z\core;
  * @copyright 使用或改进本代码请注明原作者
  * 
  */
-class Response
+class response
 {
 	// 本地缓存时间
 	private static $expire;
@@ -83,7 +85,7 @@ class Response
 	// 禁止直接创建对象
 	private function __construct()
 	{
-		self::$expire = LOCAL_EXPIRE;
+		self::$expire = z::$configure['local_expire'];
 		self::$code = 200;
 		self::$contentType = 'html';
 		self::$cache = true;
@@ -201,7 +203,7 @@ class Response
 		{
 			// 发送头部信息
 			header(self::$codeMap[self::$code]);
-			header('Content-language: ' . DEFAULT_LANG);
+			header('Content-language: ' . z::$configure['default_lang']);
 			header('Cache-Control: max-age=' . self::$expire . ',must-revalidate');
 			header('Last-Modified:' . gmdate('D,d M Y H:i:s') . ' GMT');
 			header('Expires:' . gmdate('D,d M Y H:i:s',$_SERVER['REQUEST_TIME'] + self::$expire) . ' GMT');
@@ -217,7 +219,7 @@ class Response
 		// 成功且使用缓存时保存缓存
 		if(200 == self::$code && self::$cache)
 		{
-			Cache::save(self::$content);
+			cache::save(self::$content);
 		}
 		echo self::$content;
 		if(function_exists('fastcgi_finish_request'))

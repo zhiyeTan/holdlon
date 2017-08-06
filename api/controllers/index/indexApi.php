@@ -2,17 +2,17 @@
 
 namespace controllers\index;
 
-use z\core\Model as Model;
-use z\core\Response as Response;
+use z\core\model as model;
+use z\core\response as response;
 
-class indexApi extends \z\core\Controller
+class indexApi extends \z\core\controller
 {
 	/**
 	 * 主方法（固定）
 	 */
 	public function main()
 	{
-		//$list = Model::init()->table('articles')->getAll();
+		//$list = model::init()->table('articles')->getAll();
 		//*
 		$list = array(
 			0 => array(0=>'a1', 1=>'b1', 's'=>'c1', 'child'=>array()),
@@ -21,7 +21,7 @@ class indexApi extends \z\core\Controller
 			4 => array(0=>'a4', 1=>'b4', 's'=>'c4', 'child'=>array())
 		);
 		//*/
-		Response::setContentType('json')->setContent($list);
+		response::setContentType('json')->setContent($list);
 	}
 	
 	/**

@@ -9,7 +9,7 @@ namespace z\core;
  * @copyright 使用或改进本代码请注明原作者
  * 
  */
-class Request
+class request
 {
 	/**
 	 * 当前是否ssl

@@ -3,7 +3,7 @@
 namespace z\core;
 
 use z;
-use z\lib\Core as Core;
+use z\lib\core as core;
 
 /**
  * 应用管理
@@ -12,25 +12,19 @@ use z\lib\Core as Core;
  * @copyright 使用或改进本代码请注明原作者
  * 
  */
-class App
+class app
 {
-	// 是否使用缓存
-	private static $noCache = 0;
 	// 是否发生错误
 	private static $error = false;
 	// 构造函数
 	public function __construct()
-	{
+	{	
 		// 初始化路由器并解析当前请求
-		Router::init()->parse();
-		// TODO 在控制器中统一对GET参数做判断处理
-		// TODO 在控制器中统一对POST参数做判断处理
-		// TODO 结合Validate类
-		// TODO 统一日志处理
-		// TODO 缓存文件名修正为可逆
+		router::init()->parse();
+		
+		
 		// TODO 统一底层数据交互在basic文件夹中，但该文件夹不再在z文件夹中，而是与入口、应用目录同级，且应以模块分组
 		// TODO 统一在底层数据交互中规范可接收字段以及规则，验证后才允许后续操作
-		// TODO 增加PDO类的整合
 	}
 	/**
 	 * 执行应用
@@ -39,13 +33,13 @@ class App
 	public static function run()
 	{
 		// 初始化cookie
-		Cookie::init();
+		cookie::init();
 		// 初始化session
-		Session::init();
+		session::init();
 		// 初始化响应对象
-		Response::init();
+		response::init();
 		// 若不使用缓存则设置缓存为false，否则获取真实的缓存
-		$cache = self::$noCache ? !1 : Cache::get();
+		$cache = cache::get();
 		// 分别获得模块、控制器文件名
 		$moduleFileName = APP_PATH . 'controllers' . Z_DS . $_GET['m'];
 		$controllerFileName = $moduleFileName . Z_DS . $_GET['c'] . '.php';
@@ -71,7 +65,7 @@ class App
 			if(self::$error || !method_exists($object, 'main'))
 			{
 				// 渲染404视图
-				$controller = new Controller();
+				$controller = new controller();
 				$controller->displayError(404, '控制器异常！');
 			}
 			/**
@@ -88,10 +82,10 @@ class App
 		}
 		else
 		{
-			Response::setCache(0)->setCode(304)->setContent($cache);
+			response::setCache(0)->setCode(304)->setContent($cache);
 		}
 		// 发送响应
-		Response::send();
+		response::send();
 		// 尝试执行可能存在的延后操作
 		if(method_exists($object, 'delay'))
 		{

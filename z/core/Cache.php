@@ -2,7 +2,8 @@
 
 namespace z\core;
 
-use z\lib\Core as Core;
+use z;
+use z\lib\core as core;
 
 /**
  * 缓存机制
@@ -13,7 +14,7 @@ use z\lib\Core as Core;
  * @copyright 使用或改进本代码请注明原作者
  * 
  */
-class Cache
+class cache
 {
 	// 数据接口缓存路径
 	private static $api_cache_path;
@@ -21,10 +22,6 @@ class Cache
 	private static $static_cache_path;
 	// 动态缓存路径
 	private static $dynamic_cache_path;
-	// 静态缓存有效时间
-	private static $static_cache_expire;
-	// 数据缓存有效时间
-	private static $data_cache_expire;
 	// 数据缓存文件名（含路径）
 	private static $api_cache_name;
 	// 静态文件名（含路径）
@@ -40,16 +37,14 @@ class Cache
 	private function __construct()
 	{
 		$tmpCachePath              = APP_PATH . 'cache' . Z_DS;
-		self::$api_cache_path      = dirname(APP_PATH) . Z_DS . API_DIR . Z_DS . 'cache' . Z_DS . 'static' . Z_DS;
+		self::$api_cache_path      = dirname(APP_PATH) . Z_DS . z::$configure['api_dir'] . Z_DS . 'cache' . Z_DS . 'static' . Z_DS;
 		self::$static_cache_path   = $tmpCachePath . 'static' . Z_DS;
 		self::$dynamic_cache_path  = $tmpCachePath . 'dynamic' . Z_DS;
-		self::$static_cache_expire = STATIC_CACHE_EXPIRE;
-		self::$data_cache_expire   = DATA_CACHE_EXPIRE;
 		
-		Core::chkFolder($tmpCachePath);
-		Core::chkFolder(self::$api_cache_path);
-		Core::chkFolder(self::$static_cache_path);
-		Core::chkFolder(self::$dynamic_cache_path);
+		core::chkFolder($tmpCachePath);
+		core::chkFolder(self::$api_cache_path);
+		core::chkFolder(self::$static_cache_path);
+		core::chkFolder(self::$dynamic_cache_path);
 	}
 	
 	/**
@@ -76,72 +71,63 @@ class Cache
 	}
 	
 	/**
-	 * 格式化缓存标记（作为文件名）
+	 * 设置完整缓存文件名
 	 * @access public
-	 * @param  array   $array     静态时包含所有请求参数，动态时仅需模块和控制器2个参数
-	 * @param  number  $isStatic  是否为静态缓存
-	 * @return string
+	 * @param  array    $array   键值对数组，通常为$_GET
+	 * @param  number   $type    缓存类型（0动态，1静态，2数据接口）
+	 * @return this
 	 */
-	public static function formatCacheTag($array, $isStatic = true)
+	public static function setCacheName($array, $type = 1)
 	{
 		$array['m'] = empty($array['m']) ? 'index' : $array['m'];
 		$array['c'] = empty($array['c']) ? 'index' : $array['c'];
-		// 动态缓存将格式化为md5(self::$authorKey/$_GET['m']/$_GET['c'])
-		// 静态缓存将格式化为md5(slef::$authorKey/http_build_query($_GET))
-		return md5(self::$authorKey . '/' . $isStatic ? http_build_query($array) : ($array['m'] . '/' . $array['c']));
-	}
-	
-	/**
-	 * 设置完整缓存文件名
-	 * @access public
-	 * @param  string   $key       唯一标识
-	 * @param  number   $isStatic  是否为静态缓存
-	 * @return this
-	 */
-	public static function setCacheName($key, $isStatic = true)
-	{
-		if($isStatic)
+		// 根据类型获得对应的缓存路径
+		$tmpPath = $type == 2 ? self::$api_cache_path : ($type == 1 ? self::$static_cache_path : self::$dynamic_cache_path);
+		// 增加一级以模块命名的文件夹
+		$tmpPath .= $array['m'] . Z_DS;
+		// 检查文件夹
+		core::chkFolder($tmpPath);
+		// 由于动态缓存需要require，所以必须为.php后缀，其他则不需要后缀
+		$tmpPath .= http_build_query($array) . ($type ? '' : '.php');
+		// 根据类型设置缓存名（含路径）
+		if($type == 1)
 		{
-			self::$static_cache_name  = self::$static_cache_path . $key;
+			self::$static_cache_name = $tmpPath;
+		}
+		elseif($type == 2)
+		{
+			self::$api_cache_name = $tmpPath;
 		}
 		else
 		{
-			self::$dynamic_cache_name = self::$dynamic_cache_path . $key . '.php';
+			self::$dynamic_cache_name = $tmpPath;
 		}
-		return self::$_instance;
-	}
-	
-	/**
-	 * 设置完整的数据接口缓存文件名
-	 * @access public
-	 * @param  string  $key
-	 * @return this
-	 */
-	public static function setApiCacheName($key)
-	{
-		self::$api_cache_name = self::$api_cache_path . $key;
 		return self::$_instance;
 	}
 	
 	/**
 	 * 获取指定缓存类型对应的文件路径
 	 * @access private
-	 * @param  boolean  $isStatic  是否为静态缓存
+	 * @param  number    $type   缓存类型（0动态，1静态，2数据接口）
 	 * @return path
 	 */
-	private static function getCachePath($isStatic = true)
+	private static function getCachePath($type)
 	{
-		return $isStatic ? self::$static_cache_name : self::$dynamic_cache_name;
+		return $type == 2 ? self::$api_cache_name : ($type == 1 ? self::$static_cache_name : self::$dynamic_cache_name);
+	}
+	public static function showCachePath($type)
+	{
+		return $type == 2 ? self::$api_cache_name : ($type == 1 ? self::$static_cache_name : self::$dynamic_cache_name);
 	}
 	
 	/**
 	 * 检查指定缓存类型对应的文件是否过期
 	 * @access private
 	 * @param  path      $filename   文件路径
-	 * @param  boolean   $isStatic   是否为静态缓存
+	 * @param  number    $type       缓存类型（0动态，1静态，2数据接口）
 	 * @return boolean
 	 */
-	private static function chkCacheExpire($filename, $isStatic = true, $isApi = false)
+	private static function chkCacheExpire($filename, $type = 1)
 	{
 		// 检查是否存在或可读
 		if(!is_file($filename) || !is_readable($filename))
@@ -149,17 +135,14 @@ class Cache
 			return false;
 		}
 		// 若应用入口为API入口，修正状态
-		if($_GET['e'] == API_ENTRY)
-		{
-			$isApi = true;
-		}
+		$type = $_GET['e'] == z::$configure['api_entry'] ? 2 : $type;
 		// 动态缓存没有过期时间
-		if(!$isApi && !$isStatic)
+		if(!$type)
 		{
 			return true;
 		}
 		// 数据接口使用数据缓存的有效时间，静态使用默认
-		$tmpExpire = $isApi ? self::$data_cache_expire : self::$static_cache_expire;
+		$tmpExpire = $type == 2 ? z::$configure['data_cache_expire'] : z::$configure['static_cache_expire'];
 		// 检查是否过期
 		if($tmpExpire !== 0 && time() > (filemtime($filename) + $tmpExpire))
 		{
@@ -171,30 +154,29 @@ class Cache
 	/**
 	 * 创建缓存文件
 	 * @access public
-	 * @param  mixed     $data       需要保存的内容
-	 * @param  boolean   $isStatic   是否为静态缓存
-	 * @param  boolean   $isApi      是否为静态缓存
+	 * @param  mixed    $data    需要保存的内容
+	 * @param  number   $type    缓存类型（0动态，1静态，2数据接口）
 	 * @return path
 	 */
-	public static function save($data, $isStatic = true, $isApi = false)
+	public static function save($data, $type = 1)
 	{
-		$filename = $isApi ? self::$api_cache_name : self::getCachePath($isStatic);
-		Core::fastWriteFile($filename, $data, $isApi || $isStatic);
+		$filename = self::getCachePath($type);
+		core::fastWriteFile($filename, $data, !!$type);
 		return $filename;
 	}
 	
 	/**
 	 * 如缓存内容可用则返回静态内容或动态缓存的文件路径
 	 * @access public
-	 * @param  boolean   $isStatic   是否为静态缓存
+	 * @param  number   $type    缓存类型（0动态，1静态，2数据接口）
 	 * @return string/boolean
 	 */
-	public static function get($isStatic = true, $isApi = false)
+	public static function get($type = 1)
 	{
-		$filename = $isApi ? self::$api_cache_name : self::getCachePath($isStatic);
-		if(self::chkCacheExpire($filename, $isStatic, $isApi))
+		$filename = self::getCachePath($type);
+		if(self::chkCacheExpire($filename, $type))
 		{
-			return !$isApi && !$isStatic ? $filename : Core::fastReadFile($filename, $isStatic);
+			return !$type ? $filename : core::fastReadFile($filename, !!$type);
 		}
 		return false;
 	}
@@ -202,19 +184,19 @@ class Cache
 	/**
 	 * 清楚指定缓存文件
 	 * 
-	 * @todo   这里还可以增加根据时间段删除文件
+	 * @todo   这里还应该可以增加根据时间段删除文件
 	 * 
 	 * @access public
-	 * @param  boolean   $isStatic   是否为静态缓存
+	 * @param  number    $type       缓存类型（0动态，1静态，2数据接口）
 	 * @param  boolean   $dealType   处理类型（默认false删除指定，true删除全部）
 	 * @return 
 	 */
-	public static function clean($isStatic = true, $isApi = false, $dealType = false)
+	public static function clean($type = 1, $dealType = false)
 	{
-		$filename = $isApi ? self::$api_cache_name : self::getCachePath($isStatic);
+		$filename = self::getCachePath($type);
 		if($dealType)
 		{
-			Core::recursiveDealDir(dirname($filename));
+			core::recursiveDealDir(dirname($filename));
 		}
 		else
 		{

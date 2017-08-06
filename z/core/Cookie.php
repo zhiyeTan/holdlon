@@ -2,14 +2,16 @@
 
 namespace z\core;
 
+use z;
+
 /**
- * Cookie管理
+ * cookie管理
  * 
  * @author 谈治烨<594557148@qq.com>
  * @copyright 使用或改进本代码请注明原作者
  * 
  */
-class Cookie
+class cookie
 {
 	private static $domain;
 	private static $isSsl;
@@ -18,8 +20,8 @@ class Cookie
 	// 禁止直接创建对象
 	private function __construct()
 	{
-		self::$domain = Request::cosDomain();
-		self::$isSsl = Request::isSsl();
+		self::$domain = request::cosDomain();
+		self::$isSsl = request::isSsl();
 	}
 	
 	/**
@@ -54,7 +56,7 @@ class Cookie
 	 */
 	public static function set($key, $value)
 	{
-		return setcookie($key, $value, COOKIE_EXPIRE, '/', self::$domain, self::$isSsl);
+		return setcookie($key, $value, z::$configure['cookie_expire'], '/', self::$domain, self::$isSsl);
 	}
 	
 	/**

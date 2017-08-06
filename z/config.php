@@ -22,11 +22,12 @@ return array(
 	// 调试模式
 	'app_debug'				=> true,
 	
-	// 异步操作的域名(空值表示与当前请求域名一致)
-	'async_domain'			=> '',
+	// 静态资源的域名（默认处于同一服务器，否则需为资源做同步策略）
+	// 多应用且共用静态资源的时候强烈推荐使用
+	'static_domain'			=> '',
 	
-	// 异步操作的端口(空值表示与当前请求端口一致)
-	'async_port'			=> '',
+	// 静态资源所在目录（只有在设置静态资源域名时有效，否则由于与应用入口同级，无法访问）
+	'static_dir'			=> 'static',
 	
 	// 数据接口入口名
 	'api_entry'				=> 'api',
@@ -46,7 +47,7 @@ return array(
 	// 默认时区
 	'default_timezone'		=> 'PRC',
 	
-	// 默认语言
+	// 默认语言（响应体的语言）
 	'default_lang'			=> 'zh-cn',
 	
 	// 入口文件名与应用位置文件夹名的值对地图
@@ -55,7 +56,11 @@ return array(
 								'admin'		=> 'admin'
 							),
 	
+	// 是否使用PDO连接数据库
+	'pdo_connect'			=> true,
+	
 	// 必要的数据库配置
+	'dbtype'				=> 'mysql',
 	'server'				=> 'localhost',
 	'username'				=> 'root',
 	'password'				=> 'root',

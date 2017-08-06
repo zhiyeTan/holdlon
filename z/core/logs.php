@@ -2,7 +2,7 @@
 
 namespace z\core;
 
-use z\lib\Core as Core;
+use z\lib\core as core;
 
 /**
  * 日志类
@@ -11,7 +11,7 @@ use z\lib\Core as Core;
  * @copyright 使用或改进本代码请注明原作者
  * 
  */
-class Log
+class logs
 {
 	private static $path;
 	private static $maxSize;
@@ -24,7 +24,7 @@ class Log
 		// 设置日志大小上限（单位字节）
 		self::$maxSize = 1000000;
 		// log文件夹不存在则创建并赋值权限
-		Core::chkFolder(self::$path);
+		core::chkFolder(self::$path);
 	}
 	
 	/**
@@ -81,6 +81,6 @@ class Log
 			while(!$status && $i < $domax);
 		}
 		// 保存日志
-		return Core::writeFile($filename, $content.PHP_EOL, false, true, false);
+		return core::writeFile($filename, $content.PHP_EOL, false, true, false);
 	}
 }

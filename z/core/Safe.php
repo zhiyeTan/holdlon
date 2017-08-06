@@ -2,7 +2,7 @@
 
 namespace z\core;
 
-use z\core\Session as Session;
+use z\core\session as session;
 
 /**
  * 验证机制
@@ -11,7 +11,7 @@ use z\core\Session as Session;
  * @copyright 使用或改进本代码请注明原作者
  * 
  */
-class Safe
+class safe
 {
 	/**
 	 * 验证值是否为有效格式
@@ -213,7 +213,7 @@ class Safe
 	 */
 	protected static function token($value)
 	{
-		$token = Session::get('__token__');
+		$token = session::get('__token__');
 		if(!$token)
 		{
 			// 令牌无效
@@ -222,11 +222,11 @@ class Safe
 		if($token === $value)
 		{
 			// 验证完成即销毁，防止重复提交
-			Session::delete('__token__');
+			session::delete('__token__');
 			return true;
 		}
 		// 重置令牌
-		Session::delete('__token__');
+		session::delete('__token__');
 		return false;
 	}
 	

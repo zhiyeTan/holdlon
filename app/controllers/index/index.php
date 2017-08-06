@@ -2,7 +2,7 @@
 
 namespace controllers\index;
 
-class index extends \z\core\Controller
+class index extends \z\core\controller
 {
 	/**
 	 * 主方法（固定）

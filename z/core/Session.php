@@ -2,14 +2,16 @@
 
 namespace z\core;
 
+use z;
+
 /**
- * Session管理
+ * session管理
  * 
  * @author 谈治烨<594557148@qq.com>
  * @copyright 使用或改进本代码请注明原作者
  * 
  */
-class Session
+class session
 {
 	// 保存实例在此属性中
 	private static $_instance;
@@ -19,7 +21,7 @@ class Session
 	{
 		// 配置session
 		ini_set('session.auto_start', 0);
-		ini_set('session.cache_expire', SESSION_EXPIRE);
+		ini_set('session.cache_expire', z::$configure['session_expire']);
 		ini_set('session.use_trans_sid', 0);
 		ini_set('session.use_cookies', 1);
 		// 开启session
@@ -119,10 +121,10 @@ class Session
 	public static function clean()
 	{
 		$_SESSION = array();
-		// 如果使用基于Cookie的session，则删除包含Session ID的cookie
+		// 如果使用基于cookie的session，则删除包含session ID的cookie
 		if(isset($_COOKIE[session_name()]))
 		{
-			Cookie::delete(session_name());
+			cookie::delete(session_name());
 		}
 		session_destroy();
 	}

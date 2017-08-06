@@ -1,6 +1,6 @@
 <?php
 
-use z\core\Widget as widget;
+use z\core\widget as widget;
 
 if(!widget::chkAssign('hdata'))
 {

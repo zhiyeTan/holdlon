@@ -2,6 +2,8 @@
 
 namespace z\core;
 
+use z;
+
 /**
  * 控制器
  * 
@@ -9,7 +11,7 @@ namespace z\core;
  * @copyright 使用或改进本代码请注明原作者
  * 
  */
-class Controller extends Template
+class controller extends template
 {
 	// 受许可的GET参数的键名数组，如：array('cid', 'keyword', 'page')
 	// 需验证的GET参数的键名及规则值对数组，如：array('cid'=>'int', 'keyword'=>'addslashes', 'page'=>'int')
@@ -18,7 +20,7 @@ class Controller extends Template
 	protected static $allowGetKeys		= array();
 	protected static $verifyGetValues	= array();
 	protected static $filterGetValues	= array();
-	protected static $allowPostKeys	= array();
+	protected static $allowPostKeys		= array();
 	protected static $verifyPostValues	= array();
 	protected static $filterPostValues	= array();
 	
@@ -44,7 +46,7 @@ class Controller extends Template
 		foreach($verifys as $k => $rule)
 		{
 			// 存在且不合法时标记错误
-			if(isset($target[$k]) && !Safe::verify($target[$k], $rule))
+			if(isset($target[$k]) && !safe::verify($target[$k], $rule))
 			{
 				$error = true;
 				break;
@@ -54,9 +56,9 @@ class Controller extends Template
 		if($diff || $error)
 		{
 			$content  = date('Y-m-d H:i:s', $_SERVER['REQUEST_TIME']) . ' ';
-			$content .= Request::ip(0) . ' ';
-			$content .= $isGet ? Request::realUrl() : var_export($_POST);
-			Log::init()->save($logName, $content);
+			$content .= request::ip(0) . ' ';
+			$content .= $isGet ? request::realUrl() : var_export($_POST);
+			logs::init()->save($logName, $content);
 			// 参数不合法时直接输出错误
 			if($error)
 			{
@@ -70,8 +72,8 @@ class Controller extends Template
 			// 如果GET参数存在差异，重设静态与动态缓存的文件名
 			if($isGet)
 			{
-				Cache::setCacheName(Cache::formatCacheTag($_GET));
-				Cache::setCacheName(Cache::formatCacheTag($_GET, false), false);
+				cache::setCacheName($_GET);
+				cache::setCacheName($_GET, 0);
 			}
 		}
 		// 过滤参数
@@ -79,7 +81,7 @@ class Controller extends Template
 		{
 			if(isset($target[$row[0]]))
 			{
-				$tmpValue = Safe::filter($target[$row[0]], $row[2]);
+				$tmpValue = safe::filter($target[$row[0]], $row[2]);
 				$tmpValue = empty($tmpValue) ? $row[1] : $tmpValue;
 				if($isGet) $_GET[$row[0]] = $tmpValue;
 				else $_POST[$row[0]] = $tmpValue;
@@ -97,26 +99,25 @@ class Controller extends Template
 	public function getApiData($module, $controller, $args = array())
 	{
 		// 设置api对应的缓存名，并尝试获取缓存
-		$apiEMC = array('e'=>API_ENTRY, 'm'=>$module, 'c'=>$controller);
-		$apiStaticName = Cache::formatCacheTag(array_merge($apiEMC, $args));
-		$cache = Cache::setApiCacheName($apiStaticName)->get(true, true);
+		$apiEMC = array('e'=>z::$configure['api_entry'], 'm'=>$module, 'c'=>$controller);
+		$cache = cache::setCacheName(array_merge($apiEMC, $args), 2)->get(2);
 		if($cache)
 		{
 			return $cache;
 		}
 		// 没有缓存则执行api接口函数
-		$apiPath = dirname(APP_PATH) . Z_DS . API_DIR . Z_DS . 'controllers' . Z_DS . $module . Z_DS . $controller . '.php';
+		$apiPath = dirname(APP_PATH) . Z_DS . z::$configure['api_dir'] . Z_DS . 'controllers' . Z_DS . $module . Z_DS . $controller . '.php';
 		$alias = '\\controllers\\' . $module . '\\' . $controller;
 		include $apiPath;
 		$object = new $alias();
 		if(method_exists($object, 'main'))
 		{
 			$object->main();
-			$data = Response::getContent();
+			$data = response::getContent();
 			// 重置响应内容和类型
-			Response::setContentType('html')->setContent('');
+			response::setContentType('html')->setContent('');
 			// 保存数据缓存
-			Cache::save($data, true, true);
+			cache::save($data, 2);
 			return $data;
 		}
 		return false;
@@ -130,7 +131,7 @@ class Controller extends Template
 	public function displayError($code, $content)
 	{
 		$content = '<div style="padding: 24px 48px;"><h1>&gt;_&lt;|||</h1><p>' . $content . '</p>';
-		Response::init()
+		response::init()
 			->setExpire(0)
 			->setCache(0)
 			->setCode($code)

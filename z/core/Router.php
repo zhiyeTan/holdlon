@@ -2,7 +2,8 @@
 
 namespace z\core;
 
-use z\lib\Core as Core;
+use z;
+use z\lib\core as core;
 
 /**
  * 路由策略
@@ -16,46 +17,32 @@ use z\lib\Core as Core;
  * @author 谈治烨<594557148@qq.com>
  * @copyright 使用或改进本代码请注明原作者
  */
-class Router
+class router
 {
-	/**
-	 * 路由模式
-	 */
+	// 路由模式
 	private static $pattern;
-	/**
-	 * 主机名
-	 */
+	// 主机名
 	private static $domain;
-	/**
-	 * 模式2短地址存放位置
-	 */
+	// 模式2短地址存放位置
 	private static $urlMaps;
-	/**
-	 * 作者密钥
-	 */
-	private static $authorKey = 'zhiyeTan';
-    /**
-	 * 基本字符
-	 */
+	// 作者密钥
+	private static $authorkey = 'zhiyeTan';
+    // 基本字符
     private static $baseChar = "0aAbBcC1dDeEfF2gGhHiI3jJkKlL4mMnNoO5pPqQrR6sStTuU7vVwWxX8yYzZ9";
-	/**
-	 * 保存实例在此属性中
-	 */
+	// 保存实例在此属性中
 	private static $_instance;
 	
-	/**
-	 * 私有构造函数
-	 */
+	// 私有构造函数
 	private function __construct()
 	{
-		self::$pattern = ROUTE_PATTERN;
-		self::$domain = Request::domain();
+		self::$pattern = z::$configure['route_pattern'];
+		self::$domain = request::domain();
 		// 若路由为短地址模式，设置路径并检查
-		if(ROUTE_PATTERN == 2)
+		if(self::$pattern == 2)
 		{
 			self::$urlMaps = APP_PATH . Z_DS . 'shortUrlMaps' . Z_DS;
 			// 检查文件夹
-			Core::chkFolder(self::$urlMaps);
+			core::chkFolder(self::$urlMaps);
 		}
 	}
 	
@@ -110,12 +97,12 @@ class Router
 		$queryArr['e'] = empty($queryArr['e']) ? empty($_GET['e']) ? 'index' : $_GET['e'] : $queryArr['e'];
 		$queryArr['m'] = empty($queryArr['m']) ? empty($_GET['m']) ? 'index' : $_GET['m'] : $queryArr['m'];
 		$queryArr['c'] = empty($queryArr['c']) ? empty($_GET['c']) ? 'index' : $_GET['c'] : $queryArr['c'];
-		// 根据路由模式构造URL
-		// 将API/Async请求强制使用路由模式3解析
-		if(isset($queryArr['e']) && ($queryArr['e'] == API_ENTRY || $queryArr['e'] == 'async'))
+		// 将API请求强制使用API路由模式进行解析
+		if(isset($queryArr['e']) && $queryArr['e'] == z::$configure['api_entry'])
 		{
 			self::$pattern = 3;
 		}
+		// 根据路由模式构造URL
 		switch(self::$pattern)
 		{
 			case 1:
@@ -132,7 +119,7 @@ class Router
 				// 此模式产生额外的文件读写消耗，建议仅在对地址长度有强烈需求的时候使用
 				// 转成字符串后再加密一下
 				$queryStr = http_build_query($queryArr);
-				$hashStr = md5(self::$authorKey . $queryStr);
+				$hashStr = md5(self::$authorkey . $queryStr);
 				// 将加密串分成4段计算
 				for($i = 0; $i < 4; ++$i)
 				{
@@ -149,11 +136,11 @@ class Router
 					}
 					// 判断映射是否有效
 					$tmpFileName = self::$urlMaps . $tmp_str;
-					if(!is_file($tmpFileName) || (is_file($tmpFileName) && Core::fastReadFile($tmpFileName) === $queryStr))
+					if(!is_file($tmpFileName) || (is_file($tmpFileName) && core::fastReadFile($tmpFileName) === $queryStr))
 					{
 						$url .= '/' . ($queryArr['m'] == 'index' ? '' : $queryArr['m'] . '/') . $tmp_str . '.html';
 						// 如果未存在映射关系则建立映射
-						Core::fastWriteFile($tmpFileName, $queryStr, true, false);
+						core::fastWriteFile($tmpFileName, $queryStr, true, false);
 						break;
 					}
 				}
@@ -223,7 +210,7 @@ class Router
 			$_GET = array();
 		}
 		// 将API请求强制使用路由模式3解析
-		if(isset($queryArr[0]) && $queryArr[0] == API_ENTRY)
+		if(isset($queryArr[0]) && $queryArr[0] == z::$configure['api_entry'])
 		{
 			self::$pattern = 3;
 		}
@@ -252,7 +239,7 @@ class Router
 				$queryStr = isset($queryArr[1]) ? $queryArr[1] : $queryArr[0];
 				$fileName = self::$urlMaps . $queryStr;
 				// 如存在短地址地图，取出数据并合并到$_GET中
-				$data = Core::fastReadFile($fileName);
+				$data = core::fastReadFile($fileName);
 				if($data !== false)
 				{
 					parse_str($data, $query_arr);
@@ -290,31 +277,28 @@ class Router
 		$_GET['e'] = !empty($_GET['e']) ? $_GET['e'] : 'index';
 		$_GET['m'] = !empty($_GET['m']) ? $_GET['m'] : 'index';
 		$_GET['c'] = !empty($_GET['c']) ? $_GET['c'] : 'index';
-		// 加载入口与应用位置映射
-		$entryMaps = unserialize(ENTRY_MAPS);
 		// 修正入口对应的应用位置
-		if($_GET['e'] == API_ENTRY)
+		if($_GET['e'] == z::$configure['api_entry'])
 		{
-			$appPath = dirname(ENTRY_PATH) . Z_DS . API_DIR . Z_DS;
+			$appPath = dirname(ENTRY_PATH) . Z_DS . z::$configure['api_dir'] . Z_DS;
 		}
-		// 当建立一个专门的应用目录来处理异步操作时，会覆盖下一个 elseif，也就是说不再默认用当前应用目录来处理
-		elseif(!empty($entryMaps[$_GET['e']]))
+		elseif(!empty(z::$configure['entry_maps'][$_GET['e']]))
 		{
-			$appPath = dirname(ENTRY_PATH) . Z_DS . $entryMaps[$_GET['e']] . Z_DS;
+			$appPath = dirname(ENTRY_PATH) . Z_DS . z::$configure['entry_maps'][$_GET['e']] . Z_DS;
 		}
 		else
 		{
 			// 渲染404视图
-			$controller = new Controller();
+			$controller = new controller();
 			$controller->displayError(404, '入口异常！');
 		}
 		define('APP_PATH', $appPath);
 		// 设置当前请求的唯一缓存标识
-		Cache::init();
+		cache::init();
 		// 设置静态缓存文件名
-		Cache::setCacheName(Cache::formatCacheTag($_GET));
+		cache::setCacheName($_GET);
 		// 设置动态缓存文件名
-		Cache::setCacheName(Cache::formatCacheTag($_GET, false), false);
+		cache::setCacheName($_GET, 0);
 	}
 	
 }

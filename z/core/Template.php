@@ -9,7 +9,7 @@ namespace z\core;
  * @copyright 使用或改进本代码请注明原作者
  * 
  */
-class Template
+class template
 {
 	// 是否使用动态缓存
 	private static $noCache = true;
@@ -50,7 +50,7 @@ class Template
 	{
 		$realTime = false;
 		// 获取动态缓存
-		$dynamic = Cache::get(false);
+		$dynamic = cache::get(0);
 		// 读取模板文件
 		$tplPath = APP_PATH . 'views' . Z_DS . $_GET['m'] . Z_DS . $name . self::$templateSuffix;
 		// 若设置不使用缓存则强制读取并重新编译模板
@@ -61,7 +61,7 @@ class Template
 			// 编译模板内容
 			$content = $this->complie($content);
 			// 保存动态缓存并获得其路径
-			$dynamic = Cache::save($content, false);
+			$dynamic = cache::save($content, 0);
 			// 标记已经是实时的部件数据
 			$realTime = true;
 		}
@@ -78,7 +78,7 @@ class Template
 		require $dynamic;
 		// 返回缓冲内容并清空
 		//return ob_get_clean();
-		Response::setContent(ob_get_clean());
+		response::setContent(ob_get_clean());
 	}
 	/**
 	 * 编译模板内容
@@ -120,7 +120,7 @@ class Template
 			$pattern[$res[0][$k]] = file_get_contents($tmpViewPath);
 		}
 		// 取出部件数据并赋值到数据栈中
-		$this->assign(Widget::getWidgetData());
+		$this->assign(widget::getWidgetData());
 		return strtr($content, $pattern);
 	}
 	/**
@@ -281,6 +281,6 @@ class Template
 			}
 		}
 		// 取出部件数据并赋值到数据栈中
-		$this->assign(Widget::getWidgetData());
+		$this->assign(widget::getWidgetData());
 	}
 }

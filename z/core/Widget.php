@@ -15,7 +15,7 @@ namespace z\core;
  * @copyright 使用或改进本代码请注明原作者
  * 
  */
-class Widget
+class widget
 {
 	// 禁止创建对象
 	private function __construct(){}

@@ -2,7 +2,7 @@
 
 namespace z\core;
 
-use z\lib\Core as Core;
+use z\lib\core as core;
 
 /**
  * 上传管理
@@ -11,7 +11,7 @@ use z\lib\Core as Core;
  * @copyright 使用或改进本代码请注明原作者
  * 
  */
-class Upload
+class upload
 {
 	private static $error;
 	private static $maxSize = 2; // 单位M
@@ -29,8 +29,8 @@ class Upload
 	// 禁止直接创建对象
     private function __construct()
     {
-    	Core::chkFolder(self::$uploadsDir);
-		Core::chkFolder(self::$imagesDir);
+    	core::chkFolder(self::$uploadsDir);
+		core::chkFolder(self::$imagesDir);
     }
 	
 	/**
@@ -65,7 +65,7 @@ class Upload
 	private static function mkNewDir($dirPrefix)
 	{
 		$dir = $dirPrefix . date('Ym') . Z_DS;
-		Core::chkFolder($dir);
+		core::chkFolder($dir);
 		return $dir;
 	}
 	

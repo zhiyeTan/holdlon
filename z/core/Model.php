@@ -3,62 +3,43 @@
 namespace z\core;
 
 use z;
-use mysqli;
+use PDO;
 
 /**
  * 数据库管理类
  * 
- * 基于mysqli
+ * 基于mysql
  * 
  * @author 谈治烨<594557148@qq.com>
  * @copyright 使用或改进本代码请注明原作者
  * 
  */
-class Model
+class model
 {
 	private static $conn;
-	private static $debug = array();
-	private static $table = array();
-	private static $from  = array();
-	private static $join  = array();
-	private static $field = array();
-	private static $where = array();
-	private static $order = array();
-	private static $group = array();
-	private static $having= array();
-	private static $data  = array();
-	private static $prefix= '';
-	private static $limit = '';
-	private static $useExplain = true;
+	private static $debug		= array();
+	private static $table		= array();
+	private static $from		= array();
+	private static $join		= array();
+	private static $field		= array();
+	private static $where		= array();
+	private static $order		= array();
+	private static $group		= array();
+	private static $having		= array();
+	private static $data		= array();
+	private static $dbname		= '';
+	private static $prefix		= '';
+	private static $limit		= '';
+	private static $useExplain	= true;
 	// 查询耗时，如果超过这个时间则考虑写入慢查询日志中
-	private static $maxTime = 1;
+	private static $maxTime		= 1;
 	
 	private static $_instance;
 	
 	// 禁止直接创建对象
 	private function __construct($options)
 	{
-		// 配置表前缀
-		if(isset($options['prefix']))
-		{
-			self::$prefix = $options['prefix'];
-		}
-		// 修正端口
-		if(isset($options['port']) && !is_int($options['port']))
-		{
-			$options['port'] = (int) $options['port'];
-			if(!$options['port'])
-			{
-				$options['port'] = 3306;
-			}
-		}
-		self::$conn = new mysqli($options['server'], $options['username'], $options['password'], $options['dbname'], $options['port']);
-		if(self::$conn->connect_error)
-		{
-			$controller = new Controller();
-			$controller->displayError(500, '数据库连接异常！');
-		}
-		self::$conn->set_charset($options['charset']);
+		self::$conn = connection::dbConnect($options, z::$configure['pdo_connect']);
 	}
 	
 	/**
@@ -71,7 +52,17 @@ class Model
 		if(!isset(self::$_instance))
 		{
 			$c = __CLASS__;
-			self::$_instance = new $c(z::$dbconfig);
+			$dbconf = array(
+				'dbtype'	=> z::$configure['dbtype'],
+				'server'	=> z::$configure['server'],
+				'username'	=> z::$configure['username'],
+				'password'	=> z::$configure['password'],
+				'charset'	=> z::$configure['charset'],
+				'port'		=> z::$configure['port']
+			);
+			self::$_instance = new $c($dbconf);
+			self::$prefix = z::$configure['prefix'];
+			self::$dbname = z::$configure['dbname'];
 		}
 		return self::$_instance;
 	}
@@ -83,8 +74,15 @@ class Model
 	 */
 	public function version()
 	{
-		$info = explode('-', @self::$conn->get_server_info());
-		return $info[0];
+		if(z::$configure['pdo_connect'])
+		{
+			return self::$conn->getAttribute(PDO::ATTR_SERVER_VERSION);
+		}
+		else
+		{
+			$info = explode('-', @self::$conn->get_server_info());
+			return $info[0];
+		}
 	}
 	
 	/**
@@ -93,8 +91,9 @@ class Model
 	 * @param  string  $dbname  数据库名
 	 * @return this
 	 */
-	public function useDB($dbname)
+	public function useDb($dbname)
 	{
+		self::$dbname = $dbname;
 		self::$conn->query('USE ' . $dbname);
 		return self::$_instance;
 	}
@@ -640,11 +639,12 @@ class Model
 	/**
 	 * 执行语句查询
 	 * @access private
+	 * @param  string    $sql   执行指定查询语句
 	 * @return string
 	 */
 	private static function query($sql)
 	{
-		if(Z_DEBUG)
+		if(z::$configure['app_debug'])
 		{
 			self::$debug[] = $sql;
 		}
@@ -664,18 +664,76 @@ class Model
 			$explain = self::$conn->query($esql);
 			if($explain !== false)
 			{
-				$row = $explain->fetch_assoc();
+				$row = z::$configure['pdo_connect'] ? $explain->fetch(PDO::FETCH_ASSOC) : $explain->fetch_assoc();
 				if(isset($row['type']) && in_array(strtolower($row['type']), array('index', 'all')))
 				{
 			    	$content  = date('Y-m-d H:i:s', $_SERVER['REQUEST_TIME']) . ' ';
 					$content .= $row['type'] . ' ';
 					$content .= 'times:' . $usedTime . ' ';
 					$content .= $sql;
-					Log::init()->save('slowQueryLog', $content);
+					logs::init()->save('slowQueryLog', $content);
 				}
 			}
 		}
 		return $result;
+	}
+	
+	/**
+	 * 执行事务处理
+	 * @access private
+	 * @param  string    $sql   执行指定查询语句
+	 * @return string
+	 */
+	private static function transaction($sql)
+	{
+		$status = true;
+		if(z::$configure['app_debug'])
+		{
+			self::$debug[] = $sql;
+		}
+		self::clean();
+		if(z::$configure['pdo_connect'])
+		{
+			try
+			{
+				// 开启事务，关闭自动提交
+				$conn->beginTransaction();
+				// 执行预处理语句，返回受影响行数
+				$conn->exec($sql);
+				// 提交事务并回到自动提交模式
+				$conn->commit();
+			}
+			catch (Exception $e)
+			{
+				$status = false;
+				// 回滚
+				$conn->rollBack();
+				// 关闭事务
+				$conn->setAttribute(PDO::ATTR_AUTOCOMMIT,0);
+			}
+		}
+		else
+		{
+			// 关闭自动提交
+			$conn->autocommit(0);
+			$result = $conn->query($sql);
+			// 获得受影响函数
+			$lines = $conn->affected_rows;
+			if($result && $lines)
+			{
+				// 提交事务
+				$conn->commit();
+			}
+			else
+			{
+				$status = false;
+				// 回滚
+				$conn->rollback();
+			}
+			// 开启自动提交
+			$conn->autocommit(1);
+		}
+		return $status;
 	}
 	
 	/**
@@ -694,14 +752,16 @@ class Model
 	/**
 	 * 执行新增
 	 * @access public
+	 * @param  boolean  $useTransaction  是否使用事务处理
 	 * @return 最近添加的自增ID/boolean
 	 */
-	public function insert()
+	public function insert($useTransaction = true)
 	{
 		$sql = 'INSERT INTO ' . self::tableToStr() . '(' . self::fieldToStr() . ') VALUES ' . self::insertDataToStr();
-		if(self::query($sql))
+		$result = $useTransaction ? self::transaction($sql) : self::query($sql);
+		if($result)
 		{
-			$tmpId = self::$conn->insert_id;
+			$tmpId = z::$configure['pdo_connect'] ? self::$conn->lastInsertId() : self::$conn->insert_id;
 			// 某些表不存在自增ID的情况下返回true
 			return $tmpId ? $tmpId : true;
 		}
@@ -714,26 +774,28 @@ class Model
 	/**
 	 * 执行更新
 	 * @access public
+	 * @param  boolean  $useTransaction  是否使用事务处理
 	 * @return result
 	 */
-	public function update()
+	public function update($useTransaction = true)
 	{
 		$sql = 'UPDATE ' . self::tableToStr() . ' SET ' . self::updateDateToStr() . self::whereToStr();
-		return self::query($sql);
+		return $useTransaction ? self::transaction($sql) : self::query($sql);
 	}
 	
 	/**
 	 * 执行删除
 	 * @access public
+	 * @param  boolean  $useTransaction  是否使用事务处理
 	 * @return result
 	 */
-	public function delete()
+	public function delete($useTransaction = true)
 	{
 		// 支持联表删除
 		$fragment1 = !empty(self::$from) && !empty(self::$join) ? self::fieldToStr() : '';
 		$fragment2 = !empty(self::$from) && !empty(self::$join) ? self::fromToStr() . self::joinToStr() : self::tableToStr();
 		$sql = 'DELETE ' . $fragment1 . ' FROM ' . $fragment2 . self::whereToStr();
-		return self::query($sql);
+		return $useTransaction ? self::transaction($sql) : self::query($sql);
 	}
 	
 	/**
@@ -747,7 +809,7 @@ class Model
 		$result = $sql ? self::query($sql) : $this->select();
 		if($result !== false)
 		{
-			$row = $result->fetch_row();
+			$row = z::$configure['pdo_connect'] ? $result->fetch(PDO::FETCH_NUM) : $result->fetch_row();
 			return $row !== false ? $row[0] : '';
 		}
 		return false;
@@ -765,7 +827,7 @@ class Model
 		if($result !== false)
 		{
 			$array = array();
-			while($row = $result->fetch_row())
+			while($row = z::$configure['pdo_connect'] ? $result->fetch(PDO::FETCH_NUM) : $result->fetch_row())
 			{
 				$array[] = $row[0];
 			}
@@ -785,7 +847,7 @@ class Model
 		$result = $sql ? self::query($sql) : $this->select();
 		if($result !== false)
 		{
-			return $result->fetch_assoc();
+			return z::$configure['pdo_connect'] ? $result->fetch(PDO::FETCH_ASSOC) : $result->fetch_assoc();
 		}
 		return false;
 	}
@@ -802,13 +864,34 @@ class Model
 		if($result !== false)
 		{
 			$array = array();
-			while($row = $result->fetch_assoc())
+			if(z::$configure['pdo_connect'])
 			{
-				$array[] = $row;
+				$array = $result->fetchAll(PDO::FETCH_ASSOC);
+			}
+			else
+			{
+				while($row = $result->fetch_assoc())
+				{
+					$array[] = $row;
+				}
 			}
 			return $array;
 		}
 		return false;
+	}
+	
+	/**
+	 * 读取指定数据库下的表的字段名以及类型
+	 * @access public
+	 * @param  string  $table   表名
+	 * @param  string  $dbname  数据库名（NULL时使用类属性中保存的数据库名）
+	 * @return array
+	 */
+	public function getFieldNameAndType($table, $dbname = null)
+	{
+		$dbname = $dbname ? $dbname : self::$dbname;
+		$sql = "SELECT COLUMN_NAME, COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA='" . $dbname . "' AND TABLE_NAME='" . $table . "'";
+		return $this->getRow($sql);
 	}
 	
 	/**
@@ -913,12 +996,19 @@ class Model
 	}
 	
 	/**
-	 * 断开mysql连接
+	 * 释放连接
 	 * @access public
 	 */
 	public function close()
 	{
-		self::$conn->close();
+		if(z::$configure['pdo_connect'])
+		{
+			self::$conn = null;
+		}
+		else
+		{
+			self::$conn->close();
+		}
 	}
 	
 	/**
