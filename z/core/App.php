@@ -21,8 +21,7 @@ class app
 	{	
 		// 初始化路由器并解析当前请求
 		router::init()->parse();
-		
-		
+		// TODO 测试静态分离
 		// TODO 统一底层数据交互在basic文件夹中，但该文件夹不再在z文件夹中，而是与入口、应用目录同级，且应以模块分组
 		// TODO 统一在底层数据交互中规范可接收字段以及规则，验证后才允许后续操作
 	}
@@ -68,13 +67,6 @@ class app
 				$controller = new controller();
 				$controller->displayError(404, '控制器异常！');
 			}
-			/**
-			 * TODO 这个注释掉的语句是用来修正请求参数的，它能排序一些非法提交的参数
-			 *      但它设计出来并不只是为了处理参数的，而是结合参数去得到确定名称的静态缓存
-			 *      同时，这个名称并不需要加密，而且是可逆的，可以从文件名上逆向得出具体请求地址及参数
-			 *      最终，可以利用这一特点进行静态缓存的更新
-			 * $object->fixRequestKey();
-			 */
 			// 分别执行GET参数、POST参数的安全校验以及主方法
 			$object->keepSafeQuest();
 			$object->keepSafeQuest(false);

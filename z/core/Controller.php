@@ -112,12 +112,15 @@ class controller extends template
 		$object = new $alias();
 		if(method_exists($object, 'main'))
 		{
+			$tmpGet = $_GET; // 存放当前的GET参数
+			$_GET = $args; // 将请求参数放进GET中，以应用参数
 			$object->main();
 			$data = response::getContent();
 			// 重置响应内容和类型
 			response::setContentType('html')->setContent('');
 			// 保存数据缓存
 			cache::save($data, 2);
+			$_GET = $tmpGet; // 重置为当前GET参数
 			return $data;
 		}
 		return false;
