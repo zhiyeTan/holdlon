@@ -92,38 +92,46 @@ class controller extends template
 	/**
 	 * 读取API提供的数据
 	 * @access public
-	 * @param  string  $module      模块名称
-	 * @param  string  $controller  控制器名称
-	 * @param  array   $args        请求参数
+	 * @param  string    $module            模块名称
+	 * @param  string    $controller        控制器名称
+	 * @param  array     $args              请求参数
+	 * @param  boolean   $callDelayAction   是否调用api的延后函数
+	 * @param  array     $args              api所在目录名，默认使用配置的目录名（这是为了区分API的公开性、如果没有这个需求或未设置API入口则使用默认即可）
+	 * @return array
 	 */
-	public function getApiData($module, $controller, $args = array())
+	public function getApiData($module, $controller, $args = array(), $callDelayAction = true, $apiDirName = '')
 	{
+		$apiData = array();
+		$apiDirName = $apiDirName ? $apiDirName : z::$configure['api_dir'];
 		// 设置api对应的缓存名，并尝试获取缓存
 		$apiEMC = array('e'=>z::$configure['api_entry'], 'm'=>$module, 'c'=>$controller);
-		$cache = cache::setCacheName(array_merge($apiEMC, $args), 2)->get(2);
-		if($cache)
+		$apiData = cache::setCacheName(array_merge($apiEMC, $args), 2)->get(2);
+		if(!$apiData)
 		{
-			return $cache;
+			// 没有缓存则执行api接口函数
+			$apiPath = dirname(APP_PATH) . Z_DS . $apiDirName . Z_DS . 'controllers' . Z_DS . $module . Z_DS . $controller . '.php';
+			$alias = '\\controllers\\' . $module . '\\' . $controller;
+			include $apiPath;
+			$object = new $alias();
+			if(method_exists($object, 'main'))
+			{
+				$tmpGet = $_GET; // 存放当前的GET参数
+				$_GET = $args; // 将请求参数放进GET中，以应用参数
+				$object->main();
+				$apiData = response::getContent();
+				// 重置响应内容和类型
+				response::setContentType('html')->setContent('');
+				// 保存数据缓存
+				cache::save($apiData, 2);
+				$_GET = $tmpGet; // 重置为当前GET参数
+			}
 		}
-		// 没有缓存则执行api接口函数
-		$apiPath = dirname(APP_PATH) . Z_DS . z::$configure['api_dir'] . Z_DS . 'controllers' . Z_DS . $module . Z_DS . $controller . '.php';
-		$alias = '\\controllers\\' . $module . '\\' . $controller;
-		include $apiPath;
-		$object = new $alias();
-		if(method_exists($object, 'main'))
+		// 是否调用api的延后函数
+		if($callDelayAction && method_exists($object, 'delay'))
 		{
-			$tmpGet = $_GET; // 存放当前的GET参数
-			$_GET = $args; // 将请求参数放进GET中，以应用参数
-			$object->main();
-			$data = response::getContent();
-			// 重置响应内容和类型
-			response::setContentType('html')->setContent('');
-			// 保存数据缓存
-			cache::save($data, 2);
-			$_GET = $tmpGet; // 重置为当前GET参数
-			return $data;
+			$object->delay();
 		}
-		return false;
+		return $apiData;
 	}
 	/**
 	 * 异常页面渲染

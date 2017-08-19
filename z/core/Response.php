@@ -13,8 +13,6 @@ use z;
  */
 class response
 {
-	// 本地缓存时间
-	private static $expire;
 	// 状态码地图
 	// 常用包括200、301、304、401、404
 	private static $codeMap = array(
@@ -72,6 +70,12 @@ class response
 		'xml'			=> 'Content-type: text/xml',
 		'flash'			=> 'Content-Type: application/x-shockw**e-flash'
 	);
+	// api请求的错误标记
+	private static $api_errno = false;
+	// api请求的提示信息
+	private static $api_message = '';
+	// 本地缓存时间
+	private static $expire;
 	// 状态码
 	private static $code;
 	// 内容类型
@@ -124,18 +128,6 @@ class response
 	{
 		self::$content = $content;
 		return self::$_instance;
-	}
-	
-	/**
-	 * 获取响应内容
-	 * 此函数主要用来获得接口生成的数据
-	 * @access public
-	 * @param  mixed   $content  响应内容
-	 * @return mixed
-	 */
-	public static function getContent()
-	{
-		return self::$content;
 	}
 	
 	/**
@@ -193,6 +185,42 @@ class response
 	}
 	
 	/**
+	 * 设置API错误标记
+	 * @access public
+	 * @param  boolean  $bool  是否发生错误
+	 * @return this
+	 */
+	public static function setApiErrno($bool)
+	{
+		self::$api_errno = $bool;
+		return self::$_instance;
+	}
+	
+	/**
+	 * 设置API错误信息
+	 * @access public
+	 * @param  string  $msg  错误信息
+	 * @return this
+	 */
+	public static function setApiMessage($msg)
+	{
+		self::$api_message = $msg;
+		return self::$_instance;
+	}
+	
+	/**
+	 * 获取响应内容
+	 * 此函数主要用来获得接口生成的数据
+	 * @access public
+	 * @param  mixed   $content  响应内容
+	 * @return mixed
+	 */
+	public static function getContent()
+	{
+		return self::$content;
+	}
+	
+	/**
 	 * 发送数据到客户端
 	 * @access public
 	 */
@@ -210,8 +238,13 @@ class response
 			header(self::$contentTypeMap[self::$contentType]);
 		}
 		// 格式化JSON再输出
-		if(self::$contentType == 'json')
+		if(self::$contentType == 'json' || $_GET['e'] == z::$configure['api_entry'])
 		{
+			self::$content = array(
+				'errno'		=> self::$api_errno,
+				'message'	=> self::$api_message,
+				'data'		=> self::$content
+			);
 			self::$content = self::formatToJSON(self::$content);
 		}
 		// TODO 这里判断是否使用了静态主机，若使用，则替换掉所有非http/https开头的静态文件的路径为指向静态主机的路径
